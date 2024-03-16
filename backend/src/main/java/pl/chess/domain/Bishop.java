@@ -1,7 +1,8 @@
 package pl.chess.domain;
 
 public class Bishop extends Piece{
-    public Bishop(Color color) {
-        super(color);
+
+    public Bishop(int col, int row, Color color) {
+        super(col, row, color);
     }
 }

@@ -3,40 +3,25 @@ package pl.chess.service;
 import org.springframework.stereotype.Service;
 import pl.chess.domain.*;
 
+import java.lang.reflect.InvocationTargetException;
+
 import static pl.chess.domain.Piece.Color.*;
 
 @Service
 public class GameService {
-    public void initializeBoard(Board board){
-        Piece[][] pieces = new Piece[board.height][board.width];
-        pieces[0][0] = new Rook(BLACK);
-        pieces[0][1] = new Knight(BLACK);
-        pieces[0][2] = new Bishop(BLACK);
-        pieces[0][3] = new Queen(BLACK);
-        pieces[0][4] = new King(BLACK);
-        pieces[0][5] = new Bishop(BLACK);
-        pieces[0][6] = new Knight(BLACK);
-        pieces[0][7] = new Rook(BLACK);
+    public void initializeBoard(Board board) throws Exception {
+        Class[] pieces = {Rook.class, Knight.class, Bishop.class, Queen.class, King.class, Bishop.class, Knight.class, Rook.class};
         for(int i=0;i<board.width;i++){
-            pieces[1][i] = new Pawn(BLACK);
+            board.pieces.add((Piece) pieces[i].getConstructor(int.class,int.class, Piece.Color.class).newInstance(i,0,BLACK));
         }
         for(int i=0;i<board.width;i++){
-            pieces[6][i] = new Pawn(WHITE);
+            board.pieces.add(new Pawn(i,1,BLACK));
         }
-        pieces[7][0] = new Rook(BLACK);
-        pieces[7][1] = new Knight(BLACK);
-        pieces[7][2] = new Bishop(BLACK);
-        pieces[7][3] = new King(BLACK);
-        pieces[7][4] = new Queen(BLACK);
-        pieces[7][5] = new Bishop(BLACK);
-        pieces[7][6] = new Knight(BLACK);
-        pieces[7][7] = new Rook(BLACK);
-        board.setPieces(pieces);
-    }
-    public void movePiece(Board board, int from_height, int from_width, int to_height, int to_width){
-        Piece pieces[][] = board.getPieces();
-        pieces[to_height][to_width] = pieces[from_height][from_width];
-        pieces[from_height][from_width] = null;
-        board.setPieces(pieces);
+        for(int i=0;i<board.width;i++){
+            board.pieces.add(new Pawn(i,6,WHITE));
+        }
+        for(int i=0;i<board.width;i++){//reversed order of pieces to inverse king with queen
+            board.pieces.add((Piece) pieces[board.width-i-1].getConstructor(int.class,int.class, Piece.Color.class).newInstance(i,7,WHITE));
+        }
     }
 }
