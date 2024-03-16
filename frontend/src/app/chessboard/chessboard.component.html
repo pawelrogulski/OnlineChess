@@ -1,0 +1,16 @@
+<div class="chessboard">
+  <div class="chessboard-row">
+    <div class="chessboard-cell letter"></div> <!-- Pusty element na początku wiersza -->
+    <ng-container *ngFor="let col of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; let j = index">
+      <button class="chessboard-cell letter">{{ col }}</button>
+    </ng-container>
+  </div>
+  <ng-container *ngFor="let row of [8, 7, 6, 5, 4, 3, 2, 1]; let i = index">
+    <div class="chessboard-row">
+      <div class="chessboard-cell number">{{ row }}</div>
+      <ng-container *ngFor="let col of [1, 2, 3, 4, 5, 6, 7, 8]; let j = index">
+        <button class="chessboard-cell"></button>
+      </ng-container>
+    </div>
+  </ng-container>
+</div>

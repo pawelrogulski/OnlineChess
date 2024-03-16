@@ -8,15 +8,18 @@ import pl.chess.domain.Board;
 import pl.chess.domain.Piece;
 import pl.chess.service.GameService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping ("/api/game")
 @RequiredArgsConstructor
 public class GameController {
-    private GameService gameService;
+    private final GameService gameService;
     @GetMapping("/display")
     public List<Piece> display(){
-        return new Board().pieces;
+        Board board = new Board();
+        gameService.initializeBoard(board);
+        return board.pieces;
     }
 }

@@ -3,25 +3,25 @@ package pl.chess.service;
 import org.springframework.stereotype.Service;
 import pl.chess.domain.*;
 
-import java.lang.reflect.InvocationTargetException;
 
 import static pl.chess.domain.Piece.Color.*;
+import static pl.chess.domain.Piece.Type.*;
 
 @Service
 public class GameService {
-    public void initializeBoard(Board board) throws Exception {
-        Class[] pieces = {Rook.class, Knight.class, Bishop.class, Queen.class, King.class, Bishop.class, Knight.class, Rook.class};
+    public void initializeBoard(Board board){
+        Piece.Type[] types = {ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK};
         for(int i=0;i<board.width;i++){
-            board.pieces.add((Piece) pieces[i].getConstructor(int.class,int.class, Piece.Color.class).newInstance(i,0,BLACK));
+            board.pieces.add(new Piece(i,0,WHITE, types[i]));
         }
         for(int i=0;i<board.width;i++){
-            board.pieces.add(new Pawn(i,1,BLACK));
+            board.pieces.add(new Piece(i,1,WHITE,PAWN));
         }
         for(int i=0;i<board.width;i++){
-            board.pieces.add(new Pawn(i,6,WHITE));
+            board.pieces.add(new Piece(i,6,BLACK,PAWN));
         }
         for(int i=0;i<board.width;i++){//reversed order of pieces to inverse king with queen
-            board.pieces.add((Piece) pieces[board.width-i-1].getConstructor(int.class,int.class, Piece.Color.class).newInstance(i,7,WHITE));
+            board.pieces.add(new Piece(i,7,BLACK, types[board.width-i-1]));
         }
     }
 }

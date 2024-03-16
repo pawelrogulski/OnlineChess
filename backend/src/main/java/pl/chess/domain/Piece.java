@@ -3,13 +3,22 @@ package pl.chess.domain;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-public abstract class Piece {
+public class Piece {
     private int col;
     private int row;
     private Color color;
+    private Type type;
     public enum Color{
         WHITE,
         BLACK
+    }
+    public enum Type {
+        BISHOP,
+        KING,
+        KNIGHT,
+        PAWN,
+        QUEEN,
+        ROOK
     }
 
     public int getCol() {
@@ -30,5 +39,8 @@ public abstract class Piece {
 
     public Color getColor() {
         return color;
+    }
+    public Type getType() {
+        return type;
     }
 }
