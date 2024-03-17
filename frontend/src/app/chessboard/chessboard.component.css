@@ -1,6 +1,6 @@
-.chessboard {
+.chessboard-container {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
 }
 
 .chessboard-row {
@@ -8,17 +8,11 @@
 }
 
 .chessboard-cell {
-  border: 1px solid black;
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.letter {
-  width: 40px;
-  text-align: center;
 }
 
 button {
@@ -26,4 +20,9 @@ button {
   height: 100%;
   border: none;
   background-color: transparent;
+  border: 1px ridge  black;
+}
+
+.green {
+  background-color: green;
 }
