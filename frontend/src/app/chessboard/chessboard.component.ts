@@ -12,33 +12,51 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ChessboardComponent implements OnInit {
   pieces: Piece[] = [];
-  buttonText: string[] = [];
-
+  chessboardButtons: { id: string; text: string; textColor: string }[][] = [];
   constructor(private displayService: DisplayService) {}
   ngOnInit(): void {
     this.loadChessPieces();
-    this.generateButtonText();
   }
 
   loadChessPieces(): void {
     this.displayService.getGameData().subscribe(data => {
       this.pieces = data;
+      console.log(this.pieces);
+      this.generateButtonText();
     });
   }
   generateButtonText(): void {
-    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-    const numbers = ['1', '2', '3', '4', '5', '6', '7', '8'];
-
-    for (let i = 0; i < 8; i++) {
-      for (let j = 0; j < 8; j++) {
-        if (i === 0) {
-          this.buttonText.push(letters[j]);
-        } else if (j === 0) {
-          this.buttonText.push(numbers[i - 1]);
-        } else {
-          this.buttonText.push('');
-        }
-      }
+    for(let i = 0; i < this.pieces.length; i++) {
+      console.log("xd");
+      const buttonId = `button_${this.pieces[i].col}_${this.pieces[i].row}`;
+      const buttonElement = document.getElementById(buttonId) as HTMLButtonElement;
+      buttonElement.style.color = this.pieces[i].color;
+      buttonElement.innerHTML = this.getPieceCode(this.pieces[i].type);
+    }
+  }
+  getPieceCode(type: string): string {
+    switch (type) {
+      case 'BISHOP':
+        return '&#9821;';
+      case 'KING':
+        return '&#9818;';
+      case 'KNIGHT':
+        return '&#9822;';
+      case 'PAWN':
+        return '&#9823;';
+      case 'QUEEN':
+        return '&#9819;';
+      case 'ROOK':
+        return '&#9820;';
+      default:
+        return '';
+    }
+  }
+  handleButtonClick(row: number, column: number): void {
+    const buttonId = `button_${row}_${column}`;
+    const buttonElement = document.getElementById(buttonId);
+    if (buttonElement) {
+      console.log('Clicked button with id:', buttonId);
     }
   }
 }

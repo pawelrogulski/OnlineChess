@@ -1,11 +1,5 @@
-<div class="chessboard-container">
-  <div class="chessboard">
-    <ng-container *ngFor="let row of [8, 7, 6, 5, 4, 3, 2, 1]; let i = index">
-      <div class="chessboard-row">
-        <ng-container *ngFor="let col of [1, 2, 3, 4, 5, 6, 7, 8]; let j = index">
-          <button class="chessboard-cell" [class.green]="(i + j) % 2 !== 0">{{ buttonText[i * 8 + j] }}</button>
-        </ng-container>
-      </div>
-    </ng-container>
+<div *ngFor="let row of [0,1,2,3,4,5,6,7]; let i = index" class="chessboard-row">
+  <div *ngFor="let column of [0,1,2,3,4,5,6,7]; let j = index">
+    <button class="chessboard-cell" (click)="handleButtonClick(j, i)" [class.green]="(i + j) % 2 !== 0" [attr.id]="'button_' + j + '_' + i"></button>
   </div>
 </div>
