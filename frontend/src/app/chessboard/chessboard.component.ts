@@ -29,7 +29,6 @@ export class ChessboardComponent implements OnInit {
   }
   generateButtonText(): void {
     for(let i = 0; i < this.pieces.length; i++) {
-      console.log("xd");
       const buttonId = `button_${this.pieces[i].col}_${this.pieces[i].row}`;
       const buttonElement = document.getElementById(buttonId) as HTMLButtonElement;
       buttonElement.style.color = this.pieces[i].color;
