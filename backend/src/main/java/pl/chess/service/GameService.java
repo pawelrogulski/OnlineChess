@@ -21,7 +21,7 @@ public class GameService {
             board.pieces.add(new Piece(i,6,BLACK,PAWN));
         }
         for(int i=0;i<board.width;i++){
-            board.pieces.add(new Piece(i,0,BLACK, types[i]));
+            board.pieces.add(new Piece(i,7,BLACK, types[i]));
         }
     }
 }
