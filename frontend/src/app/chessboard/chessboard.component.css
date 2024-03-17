@@ -16,9 +16,8 @@
 button {
   width: 100%;
   height: 100%;
-  border: none;
   background-color: transparent;
-  border: 1px ridge  black;
+  border: 1px solid  black;
   background-color: #c9c2ae;
 }
 

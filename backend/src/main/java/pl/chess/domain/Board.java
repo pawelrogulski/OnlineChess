@@ -15,11 +15,20 @@ import java.util.List;
  * 7
  * **/
 public class Board {
-    public static final int width = 8;
-    public static final int height = 8;
     public List<Piece> pieces;
-
+    public boolean whiteKingMoved;
+    public boolean whiteLeftRookMoved;
+    public boolean whiteRightRookMoved;
+    public boolean blackKingMoved;
+    public boolean blackLeftRookMoved;
+    public boolean blackRightRookMoved;
     public Board() {
         this.pieces = new ArrayList<>();
+        this.whiteKingMoved = false;
+        this.whiteLeftRookMoved = false;
+        this.whiteRightRookMoved = false;
+        this.blackKingMoved = false;
+        this.blackLeftRookMoved = false;
+        this.blackRightRookMoved = false;
     }
 }
