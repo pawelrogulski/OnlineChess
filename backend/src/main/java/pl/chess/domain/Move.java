@@ -11,6 +11,7 @@ public class Move {
     private Type type;
     public enum Type{
         NORMAL,
+        DOUBLE_JUMP,
         CASTLE,
         EN_PASSANT
     }

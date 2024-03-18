@@ -22,6 +22,9 @@ public class Board {
     public boolean blackKingMoved;
     public boolean blackLeftRookMoved;
     public boolean blackRightRookMoved;
+    public int enPassantCol;
+    public int enPassantRow;
+
     public Board() {
         this.pieces = new ArrayList<>();
         this.whiteKingMoved = false;
@@ -30,5 +33,7 @@ public class Board {
         this.blackKingMoved = false;
         this.blackLeftRookMoved = false;
         this.blackRightRookMoved = false;
+        this.enPassantCol = -1;
+        this.enPassantRow = -1;//if -1, it's not available
     }
 }

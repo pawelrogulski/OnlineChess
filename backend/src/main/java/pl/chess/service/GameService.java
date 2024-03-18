@@ -77,66 +77,136 @@ public class GameService {
                 capturedPiece -> board.pieces.remove(capturedPiece)//if piece exist on chosen cords remove it
         );
     }
-    public void calculateAvailableMoves(int col, int row){
+    public List<Move> calculateAvailableMoves(int col, int row){
         checkInputValues(col, row);
-        getPieceAt(col,row).ifPresentOrElse(
-                piece -> switch (piece.getType()){
-                    case BISHOP -> null;
+        if(getPieceAt(col,row).isEmpty())
+            throw new IllegalArgumentException("No piece found at given cords");
+        Piece piece = getPieceAt(col, row).get();
+        return switch (piece.getType()){
+                    case BISHOP -> calculateAvailableBishopMoves(piece);
                     case KING -> calculateAvailableKingMoves(piece);
-                    case KNIGHT -> null;
-                    case PAWN -> null;
-                    case QUEEN -> null;
-                    case ROOK -> null;
-                }
-        );
+                    case KNIGHT -> calculateAvailableKnightMoves(piece);
+                    case PAWN -> calculateAvailablePawnMoves(piece);
+                    case QUEEN -> calculateAvailableQueenMoves(piece);
+                    case ROOK -> calculateAvailableRookMoves(piece);
+                    default -> {throw new IllegalArgumentException("Chess type not found");}
+        };
     }
-    public void calculateAvailableBishopMoves(Piece piece, int col, int row){
-
-    }
-    public void calculateAvailableKingMoves(Piece piece, int col, int row){
+    public List<Move> calculateAvailableBishopMoves(Piece piece){
         List<Move> moves = new ArrayList<>();
-        for(int i=-1;i<=1;i++){
-            for(int j=-1;j<=1;j++){
+        /** bishop "x" moves can be calculated by adding same number (range 1 to 7) to col and row in 4 cases: both positive, 
+         * positive and negative, negative and positive, both negative
+         **/
+        for(int i=1;i<=7;i++){//2 loops to move in 2 dimmentions, 3rd loop to move more than 1 cell
+            for(int j=-1;j<=1;j=j+2){
+                for(int k=-1;k<=1;k=k+2){
+                    try{
+                        if(getPieceAt(piece.getCol()+i*j,piece.getRow()+i*k).isEmpty() || getPieceAt(piece.getCol()+i*j,piece.getRow()+i*k).get().getCol()!=piece.getCol()){ //2nd part can be null and throw exception
+                            moves.add(new Move(piece.getCol()+i*j,piece.getRow()+i*k, NORMAL));
+                        }
+                        else{
+                            break;
+                        }
+                    }catch (Exception e){}
+                }
+            }
+        }
+        return calculateCastleMoves(moves, piece);
+    }
+    public List<Move> calculateAvailableKingMoves(Piece piece){
+        List<Move> moves = new ArrayList<>();
+        for(int i=-1+piece.getCol();i<=1;i++){
+            for(int j=-1+piece.getRow();j<=1;j++){
                 try{
-                    if(getPieceAt(i,j).get().getCol()==piece.getCol() || getPieceAt(i,j).isEmpty()){
+                    if(getPieceAt(i,j).isEmpty() || getPieceAt(i,j).get().getCol()!=piece.getCol()){ //2nd part can be null and throw exception
                         moves.add(new Move(i,j, NORMAL));
                     }
                 }catch (Exception e){}
             }
         }
+        return calculateCastleMoves(moves, piece);
     }
-    public void calculateCastleMoves(List<Move> moves, Piece piece){
-        if(piece.getColor()==WHITE){
-            if(!board.whiteKingMoved){
-                if(getPieceAt(5,0).isEmpty() && getPieceAt(6,0).isEmpty() && !board.whiteRightRookMoved){
-                    moves.add(new Move(6,0,CASTLE));
-                }
-                if(getPieceAt(1,0).isEmpty() && getPieceAt(2,0).isEmpty() && getPieceAt(3,0).isEmpty() && !board.whiteLeftRookMoved){
-                    moves.add(new Move(2,0,CASTLE));
-                }
+    public List<Move> calculateCastleMoves(List<Move> moves, Piece piece){
+        int side = piece.getColor()== WHITE ? 0 : 7;
+        if(!board.whiteKingMoved){
+            if(getPieceAt(5,side).isEmpty() && getPieceAt(6,side).isEmpty() && !board.whiteRightRookMoved){
+                moves.add(new Move(6,side,CASTLE));
+            }
+            if(getPieceAt(1,side).isEmpty() && getPieceAt(2,side).isEmpty() && getPieceAt(3,side).isEmpty() && !board.whiteLeftRookMoved){
+                moves.add(new Move(2,side,CASTLE));
             }
         }
-        else {
-            if(!board.blackKingMoved){
-                if(getPieceAt(5,7).isEmpty() && getPieceAt(6,7).isEmpty() && !board.blackRightRookMoved){
-                    moves.add(new Move(6,7,CASTLE));
-                }
-                if(getPieceAt(1,0).isEmpty() && getPieceAt(2,7).isEmpty() && getPieceAt(3,0).isEmpty() && !board.blackLeftRookMoved){
-                    moves.add(new Move(2,7,CASTLE));
-                }
+        return moves;
+    }
+    public List<Move> calculateAvailableKnightMoves(Piece piece){
+        List<Move> moves = new ArrayList<>();
+        for(int i=-2+piece.getCol();i<=2;i++){
+            for(int j=-2+piece.getRow();j<=2;j++){
+                if(i==0 || j==0 || (Math.abs(i)==2 && Math.abs(j)==2))
+                    break;//not "L" move
+                try{
+                    if(getPieceAt(i,j).isEmpty() || getPieceAt(i,j).get().getCol()!=piece.getCol()){ //2nd part can be null and throw exception
+                        moves.add(new Move(i,j, NORMAL));
+                    }
+                }catch (Exception e){}
             }
         }
+        return moves;
     }
-    public void calculateAvailableKnightMoves(Piece piece, int col, int row){
-
+    public List<Move> calculateAvailablePawnMoves(Piece piece){
+        List<Move> moves = new ArrayList<>();
+        int side = piece.getColor()== WHITE ? 1 : -1;
+        moves.add(new Move(piece.getCol(), piece.getRow()+side, NORMAL));//move
+        for(int i=-1;i<=1;i=i+2){
+            if(getPieceAt(piece.getCol()+side,piece.getRow()+i).isEmpty()){
+                moves.add(new Move(piece.getCol()+side,piece.getRow()+i,NORMAL));//move and capture
+            }
+        }
+        calculateAvailableDoubleJump(moves, piece);
+        return calculateAvailableEnPassant(moves, piece);
     }
-    public void calculateAvailablePawnMoves(Piece piece, int col, int row){
-
+    public List<Move> calculateAvailableDoubleJump(List<Move> moves, Piece piece){
+        int side = piece.getColor()== WHITE ? 5 : 0;
+        if(piece.getRow()+side==6){
+            moves.add(new Move(piece.getCol(), piece.getRow()-2+4*(side/5), DOUBLE_JUMP));//if white add 2, if black substract 2
+            //en passant
+            board.enPassantCol=piece.getCol();
+            board.enPassantRow=piece.getRow()-1+2*(side/5);
+        }
+        return moves;
     }
-    public void calculateAvailableQueenMoves(Piece piece, int col, int row){
-
+    public List<Move> calculateAvailableEnPassant(List<Move> moves, Piece piece){
+        if(board.enPassantCol==-1) 
+            return moves;//not available
+        int side = piece.getColor()== WHITE ? 5 : 2;
+        if(piece.getRow()==side && Math.abs(piece.getCol()-board.enPassantCol)==1){// "v" or "^" move
+            moves.add(new Move(board.enPassantCol, board.enPassantRow, EN_PASSANT));
+        }
+        return moves;
     }
-    public void calculateAvailableRookMoves(Piece piece, int col, int row){
-
+    public List<Move> calculateAvailableQueenMoves(Piece piece){
+        //Queen moves are sum of bishop and rook moves
+        List<Move> moves = calculateAvailableBishopMoves(piece);
+        moves.addAll(calculateAvailableRookMoves(piece));
+        return moves;
+    }
+    public List<Move> calculateAvailableRookMoves(Piece piece){
+        List<Move> moves = new ArrayList<>();
+        //rook "+" moves can be calculated by adding values 1 to 7 to col, 1 to 7 to row, -1 to -7 to col, -1 to -7 to row
+        for(int i=1;i<=7;i++){//2 loops to move in 2 dimmentions, 3rd loop to move more than 1 cell
+            for(int j=0;j<=1;j=j++){//"switch" - if 0 - cols, if 1 - rows
+                for(int k=-1;k<=1;k=k+2){//1- up and right, -1 - down and left
+                    try{
+                        if(getPieceAt(piece.getCol()+i*(k*(j-1)),piece.getRow()+i*k*j).isEmpty() || getPieceAt(piece.getCol()+i*(k*(j-1)),piece.getRow()+i*k*j).get().getCol()!=piece.getCol()){ //2nd part can be null and throw exception
+                            moves.add(new Move(piece.getCol()+i*(k*(j-1)),piece.getRow()+i*k*j, NORMAL));
+                        }
+                        else{
+                            break;
+                        }
+                    }catch (Exception e){}
+                }
+            }           
+        }
+        return moves;
     }
 }

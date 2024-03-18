@@ -3,11 +3,10 @@ package pl.chess.controller;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import pl.chess.domain.Board;
+
+import pl.chess.domain.Move;
 import pl.chess.domain.Piece;
 import pl.chess.service.GameService;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -23,6 +22,10 @@ public class GameController {
     public List<Piece> move(@RequestBody CordsDTO cordsDTO){
         gameService.movePiece(cordsDTO.colOrigin,cordsDTO.rowOrigin,cordsDTO.colTarget,cordsDTO.rowTarget);
         return gameService.getBoard();
+    }
+    @GetMapping("/checkMoves")
+    public List<Move> checkMoves(@RequestBody CordsDTO cordsDTO){
+        return gameService.calculateAvailableMoves(cordsDTO.colOrigin,cordsDTO.rowOrigin);
     }
 
     @Data
