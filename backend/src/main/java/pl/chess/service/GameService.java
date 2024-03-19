@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import pl.chess.domain.*;
 
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,11 +37,14 @@ public class GameService {
         }
         return initializedBoard;
     }
-    public Optional<Piece> getPieceAt(int col, int row){
-        checkInputValues(col,row);
-        return board.pieces.stream()
+    public Optional<Piece> getPieceAt(int col, int row, List<Piece> pieces){//method for checking pseudo legal moves
+        checkInputValues(col,row);//if optional is empty then there is no piece in the cell, if cords out of board then exception
+        return pieces.stream()
                 .filter(piece -> piece.getCol() == col && piece.getRow() == row)
                 .findFirst();
+    }
+    public Optional<Piece> getPieceAt(int col, int row){//default method for board
+        return getPieceAt(col,row,board.pieces);
     }
     public void checkInputValues(int col, int row){
         if(col<0 || row<0){
@@ -61,28 +65,29 @@ public class GameService {
             throw new IllegalArgumentException("Origin and target must be different");
         }
     }
-    public void movePiece(int colOrigin, int rowOrigin, int colTarget, int rowTarget){
+    public void movePiece(Piece piece, Move move, List<Piece> pieces){
         //move, capture, castle, en passant
-        checkInputValues(colOrigin, rowOrigin, colTarget, rowTarget);
-        getPieceAt(colOrigin,rowOrigin).ifPresentOrElse(
-                originPiece -> {
-                    removePiece(colTarget,rowTarget);
-                    originPiece.setCol(colTarget);
-                    originPiece.setRow(rowTarget);
-                    },
-                () -> {throw new IllegalArgumentException("No piece found at given cords");}
-        );
+        removePiece(move.getCol(), move.getRow(), pieces);
+        piece.setCol(move.getCol());
+        piece.setRow(move.getRow());
     }
-    public void removePiece(int col, int row){
-        getPieceAt(col,row).ifPresent(
-                capturedPiece -> board.pieces.remove(capturedPiece)//if piece exist on chosen cords remove it
-        );
+    public void removePiece(int col, int row, List<Piece> pieces){
+        for(Piece piece : pieces){
+            if(piece.getCol()==col && piece.getRow()==row){//if empty cell do nothing
+                pieces.remove(piece);
+            }
+        }
     }
-    public List<Move> calculateAvailableMoves(int col, int row){
+    public List<Move> calculateLegalMoves(int col, int row){
         checkInputValues(col, row);
         if(getPieceAt(col,row).isEmpty())
             throw new IllegalArgumentException("No piece found at given cords");
         Piece piece = getPieceAt(col, row).get();
+        List<Move> moves = calculateAvailableMoves(piece);
+        deleteIllegalMoves(piece ,moves);
+        return moves;
+    }
+    public List<Move> calculateAvailableMoves(Piece piece){
         return switch (piece.getType()){
                     case BISHOP -> calculateAvailableBishopMoves(piece);
                     case KING -> calculateAvailableKingMoves(piece);
@@ -90,7 +95,6 @@ public class GameService {
                     case PAWN -> calculateAvailablePawnMoves(piece);
                     case QUEEN -> calculateAvailableQueenMoves(piece);
                     case ROOK -> calculateAvailableRookMoves(piece);
-                    default -> {throw new IllegalArgumentException("Chess type not found");}
         };
     }
     public List<Move> calculateAvailableBishopMoves(Piece piece){
@@ -166,9 +170,11 @@ public class GameService {
             calculateAvailableDoubleJump(moves, piece);
         }
         for(int i=-1;i<=1;i=i+2){
-            if(getPieceAt(piece.getCol()+i,piece.getRow()+side).isPresent() && getPieceAt(piece.getCol()+i,piece.getRow()+side).get().getColor()!=piece.getColor()){
-                moves.add(new Move(piece.getCol()+i,piece.getRow()+side,NORMAL));//move and capture
-            }
+            try{
+                if(getPieceAt(piece.getCol()+i,piece.getRow()+side).isPresent() && getPieceAt(piece.getCol()+i,piece.getRow()+side).get().getColor()!=piece.getColor()){
+                    moves.add(new Move(piece.getCol()+i,piece.getRow()+side,NORMAL));//move and capture
+                }
+            }catch (Exception e){}
         }
         return calculateAvailableEnPassant(moves, piece);
     }
@@ -221,5 +227,44 @@ public class GameService {
             }           
         }
         return moves;
+    }
+    public List<Move> deleteIllegalMoves(Piece piece, List<Move> moves){
+        for(Move pseudoLegalMove : moves){
+            //clone board and pieces
+            List<Piece> clonedBoard = new ArrayList<>(board.pieces.size());
+            for(Piece originPiece : board.pieces){
+                clonedBoard.add(new Piece(originPiece));
+            }
+            //get reference to cloned piece on origin piece cords
+            Piece clonedPiece = getPieceAt(piece.getCol(), piece.getRow(), clonedBoard).orElseThrow(IllegalArgumentException::new);
+            //make pseudo legal move
+            movePiece(clonedPiece,pseudoLegalMove,clonedBoard);
+            //if king is checked after move then move was illegal
+            if(isCheck(clonedPiece.getColor(), clonedBoard)){
+                moves.remove(pseudoLegalMove);
+            }
+        }
+        return moves;
+    }
+    public boolean isCheck(Piece.Color kingColor, List<Piece> pieces){
+        Piece king = getKing(kingColor);
+        List<Move> moves = new ArrayList<>();
+        for (Piece piece : pieces){
+            if(piece.getColor()!=kingColor){
+                moves.addAll(calculateAvailableMoves(piece));
+            }
+        }
+        for (Move pseudoLegalMove : moves){
+            if(king.getCol()== pseudoLegalMove.getCol() && king.getRow()== pseudoLegalMove.getRow()){
+                return true;
+            }
+        }
+        return false;
+    }
+    public Piece getKing(Piece.Color color){
+        return board.pieces.stream()
+                .filter(piece -> piece.getColor()==color && piece.getType()==KING)
+                .findAny()
+                .orElseThrow(IllegalArgumentException::new);//king always must be on the board
     }
 }

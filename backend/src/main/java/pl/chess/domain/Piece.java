@@ -20,6 +20,12 @@ public class Piece {
         QUEEN,
         ROOK
     }
+    public Piece(Piece piece){//clone
+        this.col= piece.col;
+        this.row= piece.row;
+        this.color=piece.color;
+        this.type=piece.type;
+    }
 
     public int getCol() {
         return col;

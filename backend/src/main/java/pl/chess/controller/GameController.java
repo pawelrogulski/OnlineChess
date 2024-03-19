@@ -18,14 +18,14 @@ public class GameController {
     public List<Piece> display(){
         return gameService.getBoard();
     }
-    @PostMapping("/move")
-    public List<Piece> move(@RequestBody CordsDTO cordsDTO){
-        gameService.movePiece(cordsDTO.colOrigin,cordsDTO.rowOrigin,cordsDTO.colTarget,cordsDTO.rowTarget);
-        return gameService.getBoard();
-    }
+//    @PostMapping("/move")
+//    public List<Piece> move(@RequestBody CordsDTO cordsDTO){
+//        gameService.movePiece(cordsDTO.colOrigin,cordsDTO.rowOrigin,cordsDTO.colTarget,cordsDTO.rowTarget);
+//        return gameService.getBoard();
+//    }
     @GetMapping("/checkMoves")
     public List<Move> checkMoves(@RequestBody CordsDTO cordsDTO){
-        return gameService.calculateAvailableMoves(cordsDTO.colOrigin,cordsDTO.rowOrigin);
+        return gameService.calculateLegalMoves(cordsDTO.colOrigin,cordsDTO.rowOrigin);
     }
 
     @Data
