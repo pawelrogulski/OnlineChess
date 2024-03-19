@@ -70,11 +70,12 @@ public class GameService {
         checkInputValues(colOrigin,rowOrigin,colTarget,rowTarget);
         Piece piece = getPieceAt(colOrigin, rowOrigin)
                 .orElseThrow(() -> new IllegalArgumentException("Empty cell selected as piece to move"));
-        calculateLegalMoves(colOrigin, rowOrigin)
+        Move target = calculateLegalMoves(colOrigin, rowOrigin)
                 .stream()
                 .filter(move -> move.getCol()==colTarget && move.getRow()==rowTarget)//is there a move that allows to go there?
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Piece can't move to selected cell"));
+        movePiece(piece, target, board.pieces);
 
     }
     public void movePiece(Piece piece, Move move, List<Piece> pieces){

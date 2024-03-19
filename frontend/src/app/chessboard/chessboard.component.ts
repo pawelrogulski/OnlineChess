@@ -14,7 +14,8 @@ import { Move } from '../move';
 })
 export class ChessboardComponent implements OnInit {
   pieces: Piece[] = [];
-  move: Move[] = [];
+  moves: Move[] = [];
+  currentPiece: number[] = []; //column and row
   chessboardButtons: { id: string; text: string; textColor: string }[][] = [];
   whiteSide: boolean = true;//true if player is playing white pieces
   sideColor: number[] = this.whiteSide == true ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
@@ -37,13 +38,27 @@ export class ChessboardComponent implements OnInit {
       buttonElement.innerHTML = this.getPieceCode(this.pieces[i].type);
     }
   }
-  changeButtonBackground(cells: Move[]): void {
+  changeButtonBackgroundMove(cells: Move[]): void {
     cells.forEach(cell => {
       const buttonId = `button_${cell.col}_${cell.row}`;
       const buttonElement = document.getElementById(buttonId) as HTMLButtonElement;
       buttonElement.style.backgroundColor = 'lightblue';
-      console.log(buttonId);
     });
+  }
+  cleanBoard(cleanPieces: boolean): void {
+    for(let i = 0; i <= 7; i++){
+      for(let j = 0; j <= 7; j++){
+        const buttonId = `button_${i}_${j}`;
+        const buttonElement = document.getElementById(buttonId) as HTMLButtonElement;
+        buttonElement.style.backgroundColor = (i+j)%2 == 0? "#095c02" : "#c9c2ae";
+        if(cleanPieces){
+          buttonElement.innerHTML = "";
+        }
+      }
+    }
+    if(cleanPieces){
+      this.moves = [];
+    }
   }
   getPieceCode(type: string): string {
     switch (type) {
@@ -64,14 +79,35 @@ export class ChessboardComponent implements OnInit {
     }
   }
   handleButtonClick(col: number, row: number): void {
+    this.cleanBoard(false);
     const buttonId = `button_${row}_${col}`;
-    const buttonElement = document.getElementById(buttonId);
+    const buttonElement = document.getElementById(buttonId) as HTMLButtonElement;
     if (buttonElement) {
-      this.moveService.checkMoves(col, row).subscribe(data => {
-        this.move = data;
-        this.changeButtonBackground(data);
-        console.log(this.move);
-      }, error => {console.log(error)});
+      let flagMove: boolean = false;
+      this.moves.forEach(move => {
+        if(move.col==col && move.row==row){
+          flagMove=true;
+        }
+      })
+      if(flagMove) {
+        console.log("move");
+        this.movePiece(col,row);
+      }
+      else{
+        this.moveService.checkMoves(col, row).subscribe(data => {
+          console.log("check");
+          this.moves = data;
+          this.changeButtonBackgroundMove(data);
+          this.currentPiece = [col,row];
+        }, error => {console.log(error)});
+      }
     }
+  }
+  movePiece(col: number, row: number): void {
+    this.moveService.movePiece(this.currentPiece[0], this.currentPiece[1] ,col, row).subscribe(data =>{
+      this.pieces = data;
+      this.cleanBoard(true);
+      this.generateButtonText();
+    })
   }
 }
