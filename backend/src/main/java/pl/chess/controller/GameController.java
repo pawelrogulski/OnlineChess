@@ -19,14 +19,13 @@ public class GameController {
     public List<Piece> display(){
         return gameService.getBoard();
     }
-//    @PostMapping("/move")
-//    public List<Piece> move(@RequestBody CordsDTO cordsDTO){
-//        gameService.movePiece(cordsDTO.colOrigin,cordsDTO.rowOrigin,cordsDTO.colTarget,cordsDTO.rowTarget);
-//        return gameService.getBoard();
-//    }
+    @PostMapping("/move")
+    public List<Piece> move(@RequestBody CordsDTO cordsDTO){
+        gameService.movePiece(cordsDTO.colOrigin,cordsDTO.rowOrigin,cordsDTO.colTarget,cordsDTO.rowTarget);
+        return gameService.getBoard();
+    }
     @GetMapping("/checkMoves")
     public ResponseEntity<List<Move>> checkMoves(@RequestParam int col, @RequestParam int row){
-        System.out.println("xd");
         return ResponseEntity.ok(gameService.calculateLegalMoves(col,row));
     }
 

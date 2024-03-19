@@ -8,6 +8,7 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static pl.chess.domain.Piece.Color.*;
 import static pl.chess.domain.Piece.Type.*;
@@ -65,11 +66,24 @@ public class GameService {
             throw new IllegalArgumentException("Origin and target must be different");
         }
     }
+    public void movePiece(int colOrigin, int rowOrigin, int colTarget, int rowTarget){
+        checkInputValues(colOrigin,rowOrigin,colTarget,rowTarget);
+        Piece piece = getPieceAt(colOrigin, rowOrigin)
+                .orElseThrow(() -> new IllegalArgumentException("Empty cell selected as piece to move"));
+        calculateLegalMoves(colOrigin, rowOrigin)
+                .stream()
+                .filter(move -> move.getCol()==colTarget && move.getRow()==rowTarget)//is there a move that allows to go there?
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Piece can't move to selected cell"));
+
+    }
     public void movePiece(Piece piece, Move move, List<Piece> pieces){
         //move, capture, castle, en passant
-        removePiece(move.getCol(), move.getRow(), pieces);
-        piece.setCol(move.getCol());
-        piece.setRow(move.getRow());
+        switch (move.getType()){
+            case NORMAL -> normalMove(piece,move,pieces);
+            case CASTLE -> castleMove(piece,move,pieces);
+            case EN_PASSANT -> EnPassantMove(piece,move,pieces);
+        }
     }
     public void removePiece(int col, int row, List<Piece> pieces){
         for(Piece piece : pieces){
@@ -77,6 +91,25 @@ public class GameService {
                 pieces.remove(piece);
             }
         }
+    }
+    public void normalMove(Piece piece, Move move, List<Piece> pieces){
+        removePiece(move.getCol(), move.getRow(), pieces);
+        piece.setCol(move.getCol());
+        piece.setRow(move.getRow());
+    }
+    public void castleMove(Piece king, Move move, List<Piece> pieces){
+        int rookCol = move.getCol() == 6 ? 7 : 0;
+        int rookRow = move.getRow();
+        Piece rook = getPieceAt(rookCol, rookRow).orElseThrow(IllegalArgumentException::new);
+        king.setCol(move.getCol());
+        rook.setCol(3 + 2*rookCol/7);//if on column 0, then 3, if on column 7 then 5
+        //rows stays same
+    }
+    public void EnPassantMove(Piece piece, Move move, List<Piece> pieces){
+        Piece capturedPawn = getPieceAt(move.getCol(), piece.getRow()).orElseThrow(IllegalArgumentException::new);
+        removePiece(capturedPawn.getCol(),capturedPawn.getRow(),pieces);
+        piece.setCol(move.getCol());
+        piece.setRow(move.getCol());
     }
     public List<Move> calculateLegalMoves(int col, int row){
         checkInputValues(col, row);

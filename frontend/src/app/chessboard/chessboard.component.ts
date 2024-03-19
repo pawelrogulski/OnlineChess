@@ -3,6 +3,7 @@ import { DisplayService } from '../service/display.service';
 import { MoveService } from '../service/move.service';
 import { Piece } from './../piece';
 import { Component, OnInit } from '@angular/core';
+import { Move } from '../move';
 
 @Component({
   selector: 'app-chessboard',
@@ -13,6 +14,7 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ChessboardComponent implements OnInit {
   pieces: Piece[] = [];
+  move: Move[] = [];
   chessboardButtons: { id: string; text: string; textColor: string }[][] = [];
   whiteSide: boolean = true;//true if player is playing white pieces
   sideColor: number[] = this.whiteSide == true ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
@@ -27,13 +29,21 @@ export class ChessboardComponent implements OnInit {
       this.generateButtonText();
     });
   }
-  generateButtonText(): void {
+  generateButtonText(): void {//piece or move
     for(let i = 0; i < this.pieces.length; i++) {
       const buttonId = `button_${this.pieces[i].col}_${this.pieces[i].row}`;
       const buttonElement = document.getElementById(buttonId) as HTMLButtonElement;
       buttonElement.style.color = this.pieces[i].color;
       buttonElement.innerHTML = this.getPieceCode(this.pieces[i].type);
     }
+  }
+  changeButtonBackground(cells: Move[]): void {
+    cells.forEach(cell => {
+      const buttonId = `button_${cell.col}_${cell.row}`;
+      const buttonElement = document.getElementById(buttonId) as HTMLButtonElement;
+      buttonElement.style.backgroundColor = 'lightblue';
+      console.log(buttonId);
+    });
   }
   getPieceCode(type: string): string {
     switch (type) {
@@ -57,7 +67,11 @@ export class ChessboardComponent implements OnInit {
     const buttonId = `button_${row}_${col}`;
     const buttonElement = document.getElementById(buttonId);
     if (buttonElement) {
-      this.moveService.checkMoves(col, row).subscribe(response => {console.log(response)}, error => {console.log(error)});
+      this.moveService.checkMoves(col, row).subscribe(data => {
+        this.move = data;
+        this.changeButtonBackground(data);
+        console.log(this.move);
+      }, error => {console.log(error)});
     }
   }
 }
