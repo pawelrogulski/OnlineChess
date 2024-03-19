@@ -37,6 +37,7 @@ public class GameService {
         return initializedBoard;
     }
     public Optional<Piece> getPieceAt(int col, int row){
+        checkInputValues(col,row);
         return board.pieces.stream()
                 .filter(piece -> piece.getCol() == col && piece.getRow() == row)
                 .findFirst();
@@ -97,18 +98,22 @@ public class GameService {
         /** bishop "x" moves can be calculated by adding same number (range 1 to 7) to col and row in 4 cases: both positive, 
          * positive and negative, negative and positive, both negative
          **/
-        for(int i=1;i<=7;i++){//2 loops to move in 2 dimmentions, 3rd loop to move more than 1 cell
-            for(int j=-1;j<=1;j=j+2){
-                for(int k=-1;k<=1;k=k+2){
-                    try{
-                        if(getPieceAt(piece.getCol()+i*j,piece.getRow()+i*k).isEmpty() || getPieceAt(piece.getCol()+i*j,piece.getRow()+i*k).get().getCol()!=piece.getCol()){ //2nd part can be null and throw exception
-                            moves.add(new Move(piece.getCol()+i*j,piece.getRow()+i*k, NORMAL));
+        for(int j=-1;j<=1;j=j+2){
+            for(int k=-1;k<=1;k=k+2){
+                try{
+                    for(int i=1;i<=7;i++){//2 loops to move in 2 dimensions, 3rd loop to move more than 1 cell
+                        if(getPieceAt(piece.getCol()+i*j,piece.getRow()+i*k).isEmpty()){ //2nd part can be null and throw exception
+                            moves.add(new Move(piece.getCol()+i*j,piece.getRow()+i*k, NORMAL));//empty cell
                         }
-                        else{
+                        else if(getPieceAt(piece.getCol()+i*j,piece.getRow()+i*k).get().getColor()!=piece.getColor()){
+                            moves.add(new Move(piece.getCol()+i*j,piece.getRow()+i*k, NORMAL));//opponent piece
                             break;
                         }
-                    }catch (Exception e){}
-                }
+                        else{
+                            break;//ally piece
+                        }
+                    }
+                }catch (Exception e){}
             }
         }
         return calculateCastleMoves(moves, piece);
@@ -118,7 +123,7 @@ public class GameService {
         for(int i=-1+piece.getCol();i<=1;i++){
             for(int j=-1+piece.getRow();j<=1;j++){
                 try{
-                    if(getPieceAt(i,j).isEmpty() || getPieceAt(i,j).get().getCol()!=piece.getCol()){ //2nd part can be null and throw exception
+                    if(getPieceAt(i,j).isEmpty() || getPieceAt(i,j).get().getColor()!=piece.getColor()){ //2nd part can be null and throw exception
                         moves.add(new Move(i,j, NORMAL));
                     }
                 }catch (Exception e){}
@@ -145,7 +150,7 @@ public class GameService {
                 if(i==0 || j==0 || (Math.abs(i)==2 && Math.abs(j)==2))
                     break;//not "L" move
                 try{
-                    if(getPieceAt(i,j).isEmpty() || getPieceAt(i,j).get().getCol()!=piece.getCol()){ //2nd part can be null and throw exception
+                    if(getPieceAt(i,j).isEmpty() || getPieceAt(i,j).get().getColor()!=piece.getColor()){ //2nd part can be null and throw exception
                         moves.add(new Move(i,j, NORMAL));
                     }
                 }catch (Exception e){}
@@ -156,13 +161,15 @@ public class GameService {
     public List<Move> calculateAvailablePawnMoves(Piece piece){
         List<Move> moves = new ArrayList<>();
         int side = piece.getColor()== WHITE ? 1 : -1;
-        moves.add(new Move(piece.getCol(), piece.getRow()+side, NORMAL));//move
+        if(getPieceAt(piece.getCol(),piece.getRow()+side).isEmpty()){
+            moves.add(new Move(piece.getCol(), piece.getRow()+side, NORMAL));//move 1 cell forward
+            calculateAvailableDoubleJump(moves, piece);
+        }
         for(int i=-1;i<=1;i=i+2){
-            if(getPieceAt(piece.getCol()+side,piece.getRow()+i).isEmpty()){
-                moves.add(new Move(piece.getCol()+side,piece.getRow()+i,NORMAL));//move and capture
+            if(getPieceAt(piece.getCol()+i,piece.getRow()+side).isPresent() && getPieceAt(piece.getCol()+i,piece.getRow()+side).get().getColor()!=piece.getColor()){
+                moves.add(new Move(piece.getCol()+i,piece.getRow()+side,NORMAL));//move and capture
             }
         }
-        calculateAvailableDoubleJump(moves, piece);
         return calculateAvailableEnPassant(moves, piece);
     }
     public List<Move> calculateAvailableDoubleJump(List<Move> moves, Piece piece){
@@ -192,19 +199,25 @@ public class GameService {
     }
     public List<Move> calculateAvailableRookMoves(Piece piece){
         List<Move> moves = new ArrayList<>();
-        //rook "+" moves can be calculated by adding values 1 to 7 to col, 1 to 7 to row, -1 to -7 to col, -1 to -7 to row
-        for(int i=1;i<=7;i++){//2 loops to move in 2 dimmentions, 3rd loop to move more than 1 cell
-            for(int j=0;j<=1;j=j++){//"switch" - if 0 - cols, if 1 - rows
-                for(int k=-1;k<=1;k=k+2){//1- up and right, -1 - down and left
-                    try{
-                        if(getPieceAt(piece.getCol()+i*(k*(j-1)),piece.getRow()+i*k*j).isEmpty() || getPieceAt(piece.getCol()+i*(k*(j-1)),piece.getRow()+i*k*j).get().getCol()!=piece.getCol()){ //2nd part can be null and throw exception
-                            moves.add(new Move(piece.getCol()+i*(k*(j-1)),piece.getRow()+i*k*j, NORMAL));
+        /** rook "+" moves can be calculated by adding values 1 to 7 to col, 1 to 7 to row, -1 to -7 to col, -1 to -7 to row
+         * first 2 loops are for moving in 2 dimensions, then moves in 1 line are added till meeting piece (break) or out of board (catch)
+         */
+        for(int k=-1;k<=1;k=k+2){//1- up and right, -1 - down and left
+            for(int j=0;j<=1;j++){//"switch" - if 0 - cols, if 1 - rows
+                try{
+                    for(int i=1;i<=7;i++){//2 loops to move in 2 dimensions, 3rd loop to move more than 1 cell
+                        if(getPieceAt(piece.getCol()+i*(k*(j-1)),piece.getRow()+i*k*j).isEmpty()){ //2nd part can be null and throw exception
+                            moves.add(new Move(piece.getCol()+i*(k*(j-1)),piece.getRow()+i*k*j, NORMAL));//empty cell
                         }
-                        else{
+                        else if(getPieceAt(piece.getCol()+i*(k*(j-1)),piece.getRow()+i*k*j).get().getColor()!=piece.getColor()){
+                            moves.add(new Move(piece.getCol()+i*(k*(j-1)),piece.getRow()+i*k*j, NORMAL));//opponent piece
                             break;
                         }
-                    }catch (Exception e){}
-                }
+                        else{
+                            break;//ally piece
+                        }
+                    }
+                }catch (Exception e){}
             }           
         }
         return moves;
