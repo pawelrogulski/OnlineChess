@@ -2,6 +2,7 @@ package pl.chess.controller;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import pl.chess.domain.Move;
@@ -24,8 +25,9 @@ public class GameController {
 //        return gameService.getBoard();
 //    }
     @GetMapping("/checkMoves")
-    public List<Move> checkMoves(@RequestBody CordsDTO cordsDTO){
-        return gameService.calculateLegalMoves(cordsDTO.colOrigin,cordsDTO.rowOrigin);
+    public ResponseEntity<List<Move>> checkMoves(@RequestParam int col, @RequestParam int row){
+        System.out.println("xd");
+        return ResponseEntity.ok(gameService.calculateLegalMoves(col,row));
     }
 
     @Data
