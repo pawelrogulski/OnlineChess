@@ -79,6 +79,7 @@ public class GameService {
         board.enPassantCol=-1;
         board.enPassantRow=-1;//reset en passant
         movePiece(piece, target, board.pieces);
+        disableCastleCheck(colOrigin,rowOrigin,colTarget,rowTarget);
     }
     public void movePiece(Piece piece, Move move, List<Piece> pieces){
         //move, capture, castle, en passant
@@ -164,7 +165,7 @@ public class GameService {
                 }catch (Exception e){}
             }
         }
-        return calculateCastleMoves(moves, piece, pieces);
+        return moves;
     }
     public List<Move> calculateAvailableKingMoves(Piece piece, List<Piece> pieces){
         List<Move> moves = new ArrayList<>();
@@ -181,11 +182,14 @@ public class GameService {
     }
     public List<Move> calculateCastleMoves(List<Move> moves, Piece piece, List<Piece> pieces){
         int side = piece.getColor()== WHITE ? 0 : 7;
-        if(!board.whiteKingMoved){
-            if(getPieceAt(5,side, pieces).isEmpty() && getPieceAt(6,side, pieces).isEmpty() && !board.whiteRightRookMoved){
+        boolean king = piece.getColor()== WHITE ? board.whiteKingMoved : board.blackKingMoved;
+        boolean rightRook = piece.getColor()== WHITE ? board.whiteRightRookMoved : board.blackRightRookMoved;
+        boolean leftRook = piece.getColor()== WHITE ? board.whiteLeftRookMoved : board.whiteRightRookMoved;
+        if(!king){
+            if(getPieceAt(5,side, pieces).isEmpty() && getPieceAt(6,side, pieces).isEmpty() && !rightRook){
                 moves.add(new Move(6,side,CASTLE));
             }
-            if(getPieceAt(1,side, pieces).isEmpty() && getPieceAt(2,side, pieces).isEmpty() && getPieceAt(3,side, pieces).isEmpty() && !board.whiteLeftRookMoved){
+            if(getPieceAt(1,side, pieces).isEmpty() && getPieceAt(2,side, pieces).isEmpty() && getPieceAt(3,side, pieces).isEmpty() && !leftRook){
                 moves.add(new Move(2,side,CASTLE));
             }
         }
@@ -239,9 +243,15 @@ public class GameService {
         return moves;
     }
     public List<Move> calculateAvailableQueenMoves(Piece piece, List<Piece> pieces){
-        //Queen moves are sum of bishop and rook moves
+        //Queen moves are sum of bishop and rook moves, without castle
         List<Move> moves = calculateAvailableBishopMoves(piece, pieces);
         moves.addAll(calculateAvailableRookMoves(piece, pieces));
+        Iterator<Move> movesWithoutCastle = moves.iterator();
+        while(movesWithoutCastle.hasNext()){
+            if(movesWithoutCastle.next().getType()==CASTLE){
+                movesWithoutCastle.remove();
+            }
+        }
         return moves;
     }
     public List<Move> calculateAvailableRookMoves(Piece piece, List<Piece> pieces){
@@ -308,5 +318,39 @@ public class GameService {
                 .filter(piece -> piece.getColor()==color && piece.getType()==KING)
                 .findAny()
                 .orElseThrow(IllegalArgumentException::new);//king always must be on the board
+    }
+    public void disableCastleCheck(int colOrigin, int rowOrigin, int colTarget, int rowTarget){
+        if(colOrigin ==0 && rowOrigin ==0){
+            board.whiteLeftRookMoved=true;
+        }
+        if(colTarget ==0 && rowTarget ==0){
+            board.whiteLeftRookMoved=true;
+        }
+        if(colOrigin ==7 && rowOrigin ==0){
+            board.whiteRightRookMoved=true;
+        }
+        if(colTarget ==7 && rowTarget ==0){
+            board.whiteRightRookMoved=true;
+        }
+        if(colOrigin ==0 && rowOrigin ==7){
+            board.blackLeftRookMoved=true;
+        }
+        if(colTarget ==0 && rowTarget ==7){
+            board.blackLeftRookMoved=true;
+        }
+        if(colOrigin ==7 && rowOrigin ==7){
+            board.blackRightRookMoved=true;
+        }
+        if(colTarget ==7 && rowTarget ==7){
+            board.blackRightRookMoved=true;
+        }
+        if(colOrigin ==4){
+            if(rowOrigin ==0){
+                board.whiteKingMoved=true;
+            }
+            if(rowOrigin ==7){
+                board.blackKingMoved=true;
+            }
+        }
     }
 }
