@@ -1,2 +1,8 @@
-
-<router-outlet />
+<h1>Welcome to Online Chess</h1>
+<form (ngSubmit)="startGame()">
+    <label for="username">Enter your username:</label><br>
+    <input type="text" id="username" name="username" [(ngModel)]="username" required><br>
+    <input type="checkbox" id="gameMode" name="gameMode" [(ngModel)]="multiplayer">
+    <label for="gameMode">Play against another player</label><br>
+    <button type="submit">Start Game</button>
+</form>

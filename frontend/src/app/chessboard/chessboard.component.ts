@@ -90,12 +90,10 @@ export class ChessboardComponent implements OnInit {
         }
       })
       if(flagMove) {
-        console.log("move");
         this.movePiece(col,row);
       }
       else{
         this.moveService.checkMoves(col, row).subscribe(data => {
-          console.log("check");
           this.moves = data;
           this.changeButtonBackgroundMove(data);
           this.currentPiece = [col,row];
