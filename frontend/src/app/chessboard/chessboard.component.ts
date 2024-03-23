@@ -4,6 +4,8 @@ import { MoveService } from '../service/move.service';
 import { Piece } from './../piece';
 import { Component, OnInit } from '@angular/core';
 import { Move } from '../move';
+import { NotificationService } from '../service/notification.service';
+import { DataService } from '../service/data.service';
 
 @Component({
   selector: 'app-chessboard',
@@ -16,12 +18,17 @@ export class ChessboardComponent implements OnInit {
   pieces: Piece[] = [];
   moves: Move[] = [];
   currentPiece: number[] = []; //column and row
+  notification: string = '';
   chessboardButtons: { id: string; text: string; textColor: string }[][] = [];
   whiteSide: boolean = true;//true if player is playing white pieces
   sideColor: number[] = this.whiteSide == true ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
-  constructor(private displayService: DisplayService, private moveService: MoveService) {}
+  constructor(private displayService: DisplayService, private moveService: MoveService, private notificationService: NotificationService) {}
   ngOnInit(): void {
     this.loadChessPieces();
+    this.notificationService.getNotifications().subscribe(notification => {
+      this.notification = notification;
+      console.log(this.notification);
+    });
   }
 
   loadChessPieces(): void {
@@ -108,4 +115,5 @@ export class ChessboardComponent implements OnInit {
       this.generateButtonText();
     })
   }
+
 }

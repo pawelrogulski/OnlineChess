@@ -33,26 +33,11 @@ public class Board {
         SINGLEPLAYER,
         MULTIPLAYER
     }
-
-    public Board(Player whitePlayer) {
-        this.pieces = new ArrayList<>();
-        this.whitePlayer = whitePlayer;
-        this.gameMode = GameMode.SINGLEPLAYER;
-        this.turn = whitePlayer;
-        this.whiteKingMoved = false;
-        this.whiteLeftRookMoved = false;
-        this.whiteRightRookMoved = false;
-        this.blackKingMoved = false;
-        this.blackLeftRookMoved = false;
-        this.blackRightRookMoved = false;
-        this.enPassantCol = -1;
-        this.enPassantRow = -1;//if -1, it's not available
-    }
-    public Board(Player whitePlayer, Player blackPlayer) {
+    public Board(Player whitePlayer, Player blackPlayer, GameMode gameMode) {
         this.pieces = new ArrayList<>();
         this.whitePlayer = whitePlayer;
         this.blackPlayer = blackPlayer;
-        this.gameMode = GameMode.MULTIPLAYER;
+        this.gameMode = gameMode;
         this.turn = whitePlayer;
         this.whiteKingMoved = false;
         this.whiteLeftRookMoved = false;
@@ -78,5 +63,8 @@ public class Board {
     }
     public Player getBlackPlayer(){
         return this.blackPlayer;
+    }
+    public GameMode getGameMode(){
+        return this.gameMode;
     }
 }

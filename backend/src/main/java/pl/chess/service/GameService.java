@@ -17,6 +17,8 @@ import static pl.chess.domain.Move.Type.*;
 @AllArgsConstructor
 public class GameService {
     private final AuthenticationService authenticationService;
+    private final ChessEngineService chessEngineService;
+    private final NotificationService notificationService;
     public void newSingleGame(UUID playerId){
         authenticationService.newSingleGame(playerId, initializeBoard(playerId));
     }
@@ -24,11 +26,11 @@ public class GameService {
         return authenticationService.findBoard(playerId).pieces;
     }
     public Board initializeBoard(UUID whitePlayer){
-        Board initializedBoard = new Board(authenticationService.validatePlayerCredentials(whitePlayer));
+        Board initializedBoard = new Board(authenticationService.validatePlayerCredentials(whitePlayer), authenticationService.getEngineInstance(), Board.GameMode.SINGLEPLAYER);
         return initializePieces(initializedBoard);
     }
     public Board initializeBoard(UUID whitePlayer, UUID blackPlayer){
-        Board initializedBoard = new Board(authenticationService.validatePlayerCredentials(whitePlayer), authenticationService.validatePlayerCredentials(blackPlayer));
+        Board initializedBoard = new Board(authenticationService.validatePlayerCredentials(whitePlayer), authenticationService.validatePlayerCredentials(blackPlayer), Board.GameMode.MULTIPLAYER);
         return initializePieces(initializedBoard);
     }
     private Board initializePieces(Board board){
@@ -90,10 +92,16 @@ public class GameService {
         board.enPassantRow=-1;//reset en passant
         movePiece(piece, target, board);
         disableCastleCheck(colOrigin,rowOrigin,colTarget,rowTarget, board);
+        isMate(piece.getColor(), board);
         board.changeTurn();
+        if(board.getGameMode()== Board.GameMode.SINGLEPLAYER){
+            useEngine(board);
+            isMate(piece.getColor(), board);
+            board.enPassantCol=-1;
+            board.enPassantRow=-1;//reset en passant
+        }
     }
     public void movePiece(Piece piece, Move move, Board board){
-        //move, capture, castle, en passant
         switch (move.getType()){
             case NORMAL -> normalMove(piece,move, board.pieces);
             case DOUBLE_JUMP -> doubleJumpMove(piece,move,board);//set en passant
@@ -209,7 +217,7 @@ public class GameService {
         int side = piece.getColor()== WHITE ? 0 : 7;
         boolean king = piece.getColor()== WHITE ? board.whiteKingMoved : board.blackKingMoved;
         boolean rightRook = piece.getColor()== WHITE ? board.whiteRightRookMoved : board.blackRightRookMoved;
-        boolean leftRook = piece.getColor()== WHITE ? board.whiteLeftRookMoved : board.whiteRightRookMoved;
+        boolean leftRook = piece.getColor()== WHITE ? board.whiteLeftRookMoved : board.blackLeftRookMoved;
         if(!king){
             if(getPieceAt(5,side, board.pieces).isEmpty() && getPieceAt(6,side, board.pieces).isEmpty() && !rightRook){
                 moves.add(new Move(6,side,CASTLE));
@@ -339,6 +347,29 @@ public class GameService {
         }
         return false;
     }
+    public void isMate(Piece.Color color, Board board){
+        List<Move> moves = new ArrayList<>();
+        String score = "";
+        board.pieces//get all moves of enemy
+                .stream()
+                .filter(piece -> piece.getColor()!=color)
+                .forEach(piece -> moves.addAll(calculateLegalMoves(piece.getCol(),piece.getRow(),board)));
+        if(moves.size()>0){
+            return;
+        }
+        Piece.Color enemyColor = color==WHITE ? BLACK : WHITE;
+        if(isCheck(enemyColor,board)){
+            score = enemyColor==WHITE ? "BLACK_WON" : "WHITE_WON";
+        }
+        else{
+            score = "DRAW";
+        }
+        notificationService.sendToEmitter(score,board.getWhitePlayer().getUserId());
+        if(board.getGameMode()== Board.GameMode.MULTIPLAYER){
+            notificationService.sendToEmitter(score,board.getBlackPlayer().getUserId());
+        }
+        authenticationService.deleteSession(board);
+    }
     public Piece getKing(Piece.Color color, List<Piece> pieces){
         return pieces.stream()
                 .filter(piece -> piece.getColor()==color && piece.getType()==KING)
@@ -378,5 +409,22 @@ public class GameService {
                 board.blackKingMoved=true;
             }
         }
+    }
+    private void useEngine(Board board){
+        Piece.Color color = board.getTurn()==board.getWhitePlayer() ? WHITE : BLACK;
+        while(true){
+            Piece selectedPiece = chessEngineService.selectRandomPiece(
+                    board.pieces.stream()
+                            .filter(piece -> piece.getColor()==color)
+                            .collect(Collectors.toList()));
+            List<Move> moves = calculateLegalMoves(selectedPiece.getCol(), selectedPiece.getRow(), board);
+            if(!moves.isEmpty()){
+                Move move = chessEngineService.selectRandomMove(moves);
+                movePiece(selectedPiece, move, board);
+                disableCastleCheck(selectedPiece.getCol(), selectedPiece.getRow(), move.getCol(), move.getRow(), board);
+                break;
+            }
+        }
+        board.changeTurn();
     }
 }
