@@ -11,7 +11,7 @@ export class DataService {
   constructor(private http: HttpClient) {}
 
   getPlayerId(): string{
-    let playerId =  sessionStorage.getItem('playerId');
+    let playerId =  localStorage.getItem('playerId');
     if(playerId == null){
       playerId = "";
     }
@@ -19,7 +19,7 @@ export class DataService {
   }
 
   setPlayerId(playerId: string): void {
-    sessionStorage.setItem('playerId', playerId);
+    localStorage.setItem('playerId', playerId);
   }
   checkSession(): void {
     const playerId = this.getPlayerId();

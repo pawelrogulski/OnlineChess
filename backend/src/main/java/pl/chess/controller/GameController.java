@@ -29,8 +29,9 @@ public class GameController {
         return ResponseEntity.ok(gameService.calculateLegalMoves(col,row, UUID.fromString(playerId)));
     }
     @PostMapping("/newSingleGame")
-    public void newSingleGame(@RequestHeader("Authorization") String playerId){
+    public boolean newSingleGame(@RequestHeader("Authorization") String playerId){
         gameService.newSingleGame(UUID.fromString(playerId));
+        return true;
     }
 
     @Data

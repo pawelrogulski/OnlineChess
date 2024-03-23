@@ -18,28 +18,35 @@ import static pl.chess.domain.Move.Type.*;
 public class GameService {
     private final AuthenticationService authenticationService;
     public void newSingleGame(UUID playerId){
-        authenticationService.newSingleGame(playerId, initializeBoard());
+        authenticationService.newSingleGame(playerId, initializeBoard(playerId));
     }
     public List<Piece> getBoard(UUID playerId){
         return authenticationService.findBoard(playerId).pieces;
     }
-    public Board initializeBoard(){
-        Board initializedBoard = new Board();
+    public Board initializeBoard(UUID whitePlayer){
+        Board initializedBoard = new Board(authenticationService.validatePlayerCredentials(whitePlayer));
+        return initializePieces(initializedBoard);
+    }
+    public Board initializeBoard(UUID whitePlayer, UUID blackPlayer){
+        Board initializedBoard = new Board(authenticationService.validatePlayerCredentials(whitePlayer), authenticationService.validatePlayerCredentials(blackPlayer));
+        return initializePieces(initializedBoard);
+    }
+    private Board initializePieces(Board board){
         //set pieces position at the start of game
         Piece.Type[] types = {ROOK, KNIGHT, BISHOP, QUEEN, KING, BISHOP, KNIGHT, ROOK};
         for(int i=0;i<8;i++){
-            initializedBoard.pieces.add(new Piece(i,0,WHITE, types[i]));
+            board.pieces.add(new Piece(i,0,WHITE, types[i]));
         }
         for(int i=0;i<8;i++){
-            initializedBoard.pieces.add(new Piece(i,1,WHITE,PAWN));
+            board.pieces.add(new Piece(i,1,WHITE,PAWN));
         }
         for(int i=0;i<8;i++){
-            initializedBoard.pieces.add(new Piece(i,6,BLACK,PAWN));
+            board.pieces.add(new Piece(i,6,BLACK,PAWN));
         }
         for(int i=0;i<8;i++){
-            initializedBoard.pieces.add(new Piece(i,7,BLACK, types[i]));
+            board.pieces.add(new Piece(i,7,BLACK, types[i]));
         }
-        return initializedBoard;
+        return board;
     }
     public Optional<Piece> getPieceAt(int col, int row, List<Piece> pieces){//method for checking pseudo legal moves
         checkInputValues(col,row);//if optional is empty then there is no piece in the cell, if cords out of board then exception
@@ -83,6 +90,7 @@ public class GameService {
         board.enPassantRow=-1;//reset en passant
         movePiece(piece, target, board);
         disableCastleCheck(colOrigin,rowOrigin,colTarget,rowTarget, board);
+        board.changeTurn();
     }
     public void movePiece(Piece piece, Move move, Board board){
         //move, capture, castle, en passant
@@ -127,6 +135,17 @@ public class GameService {
         piece.setRow(move.getRow());
     }
     public List<Move> calculateLegalMoves(int col, int row, UUID playerId){
+        Board board = authenticationService.findBoard(playerId);
+        if(!board.getTurn().getUserId().equals(playerId)){
+            return new ArrayList<>();//if not player turn then he can't move
+        }
+        if(getPieceAt(col,row,board.pieces).isEmpty()){
+            return new ArrayList<>();//no piece found on given cell
+        }
+        Player player = getPieceAt(col,row,board.pieces).get().getColor()==WHITE ? board.getWhitePlayer() : board.getBlackPlayer();//if white piece check white player turn
+        if(player != board.getTurn()){
+            return new ArrayList<>();//white player can't move black piece and so on
+        }
         return calculateLegalMoves(col, row, authenticationService.findBoard(playerId));
     }
     public List<Move> calculateLegalMoves(int col, int row, Board board){

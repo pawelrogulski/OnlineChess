@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { DataService } from './data.service';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -9,17 +10,10 @@ export class GameModeService {
 
   constructor(private http: HttpClient, private dataService: DataService) {}
 
-  newtSingleplayerGame(){
+  newSingleplayerGame():Observable<boolean>{
     const playerId = this.dataService.getPlayerId();
     const headers = new HttpHeaders().set('Authorization', playerId);
-    this.http.post('http://localhost:8080/api/game/newSingleGame', null, { headers }).subscribe(
-      () => {
-        console.log('Żądanie POST zostało wysłane pomyślnie');
-      },
-      (error) => {
-        console.error('Wystąpił błąd podczas wysyłania żądania POST:', error);
-      }
-    );
+    return this.http.post<boolean>('http://localhost:8080/api/game/newSingleGame', null, { headers });
   }
   newtMultiplayerGame(){
     const playerId = this.dataService.getPlayerId();
