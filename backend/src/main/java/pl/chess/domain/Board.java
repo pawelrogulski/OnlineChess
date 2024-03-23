@@ -36,4 +36,7 @@ public class Board {
         this.enPassantCol = -1;
         this.enPassantRow = -1;//if -1, it's not available
     }
+    public Board(List<Piece> pieces){
+        this.pieces=pieces;
+    }
 }

@@ -1,14 +1,12 @@
 package pl.chess.service;
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.chess.domain.*;
 
 
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static pl.chess.domain.Piece.Color.*;
@@ -16,10 +14,14 @@ import static pl.chess.domain.Piece.Type.*;
 import static pl.chess.domain.Move.Type.*;
 
 @Service
+@AllArgsConstructor
 public class GameService {
-    Board board = initializeBoard();
-    public List<Piece> getBoard(){
-        return board.pieces;
+    private final AuthenticationService authenticationService;
+    public void newSingleGame(UUID playerId){
+        authenticationService.newSingleGame(playerId, initializeBoard());
+    }
+    public List<Piece> getBoard(UUID playerId){
+        return authenticationService.findBoard(playerId).pieces;
     }
     public Board initializeBoard(){
         Board initializedBoard = new Board();
@@ -45,8 +47,8 @@ public class GameService {
                 .filter(piece -> piece.getCol() == col && piece.getRow() == row)
                 .findFirst();
     }
-    public Optional<Piece> getPieceAt(int col, int row){//default method for board
-        return getPieceAt(col,row,board.pieces);
+    public Optional<Piece> getPieceAt(int col, int row, UUID playerId){//default method for board
+        return getPieceAt(col,row,authenticationService.findBoard(playerId).pieces);
     }
     public void checkInputValues(int col, int row){
         if(col<0 || row<0){
@@ -67,27 +69,28 @@ public class GameService {
             throw new IllegalArgumentException("Origin and target must be different. ColOrigin:"+colOrigin+" rowOrigin:"+rowOrigin+" colTarget:"+colTarget+" rowTarget:"+rowTarget);
         }
     }
-    public void movePiece(int colOrigin, int rowOrigin, int colTarget, int rowTarget){
+    public void movePiece(int colOrigin, int rowOrigin, int colTarget, int rowTarget, UUID playerId){
         checkInputValues(colOrigin,rowOrigin,colTarget,rowTarget);
-        Piece piece = getPieceAt(colOrigin, rowOrigin)
+        Board board = authenticationService.findBoard(playerId);
+        Piece piece = getPieceAt(colOrigin, rowOrigin, playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Empty cell selected as piece to move"));
-        Move target = calculateLegalMoves(colOrigin, rowOrigin)
+        Move target = calculateLegalMoves(colOrigin, rowOrigin, board)
                 .stream()
                 .filter(move -> move.getCol()==colTarget && move.getRow()==rowTarget)//is there a move that allows to go there?
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Piece can't move to selected cell"));
         board.enPassantCol=-1;
         board.enPassantRow=-1;//reset en passant
-        movePiece(piece, target, board.pieces);
-        disableCastleCheck(colOrigin,rowOrigin,colTarget,rowTarget);
+        movePiece(piece, target, board);
+        disableCastleCheck(colOrigin,rowOrigin,colTarget,rowTarget, board);
     }
-    public void movePiece(Piece piece, Move move, List<Piece> pieces){
+    public void movePiece(Piece piece, Move move, Board board){
         //move, capture, castle, en passant
         switch (move.getType()){
-            case NORMAL -> normalMove(piece,move,pieces);
-            case DOUBLE_JUMP -> doubleJumpMove(piece,move,pieces);//set en passant
-            case CASTLE -> castleMove(piece,move,pieces);
-            case EN_PASSANT -> EnPassantMove(piece,move,pieces);
+            case NORMAL -> normalMove(piece,move, board.pieces);
+            case DOUBLE_JUMP -> doubleJumpMove(piece,move,board);//set en passant
+            case CASTLE -> castleMove(piece,move,board.pieces);
+            case EN_PASSANT -> EnPassantMove(piece,move,board.pieces);
         }
     }
     public void removePiece(int col, int row, List<Piece> pieces){
@@ -102,8 +105,8 @@ public class GameService {
         piece.setCol(move.getCol());
         piece.setRow(move.getRow());
     }
-    public void doubleJumpMove(Piece piece, Move move, List<Piece> pieces){
-        removePiece(move.getCol(), move.getRow(), pieces);
+    public void doubleJumpMove(Piece piece, Move move, Board board){
+        removePiece(move.getCol(), move.getRow(), board.pieces);
         piece.setCol(move.getCol());
         piece.setRow(move.getRow());
         board.enPassantCol=piece.getCol();
@@ -123,23 +126,26 @@ public class GameService {
         piece.setCol(move.getCol());
         piece.setRow(move.getRow());
     }
-    public List<Move> calculateLegalMoves(int col, int row){
+    public List<Move> calculateLegalMoves(int col, int row, UUID playerId){
+        return calculateLegalMoves(col, row, authenticationService.findBoard(playerId));
+    }
+    public List<Move> calculateLegalMoves(int col, int row, Board board){
         checkInputValues(col, row);
-        if(getPieceAt(col,row).isEmpty())
+        if(getPieceAt(col,row, board.pieces).isEmpty())
             throw new IllegalArgumentException("No piece found at given cords");
-        Piece piece = getPieceAt(col, row).get();
-        List<Move> moves = calculateAvailableMoves(piece, board.pieces);
-        deleteIllegalMoves(piece ,moves);
+        Piece piece = getPieceAt(col, row, board.pieces).get();
+        List<Move> moves = calculateAvailableMoves(piece, board);
+        deleteIllegalMoves(piece ,moves, board);
         return moves;
     }
-    public List<Move> calculateAvailableMoves(Piece piece, List<Piece> pieces){
+    public List<Move> calculateAvailableMoves(Piece piece, Board board){
         return switch (piece.getType()){
-                    case BISHOP -> calculateAvailableBishopMoves(piece, pieces);
-                    case KING -> calculateAvailableKingMoves(piece, pieces);
-                    case KNIGHT -> calculateAvailableKnightMoves(piece, pieces);
-                    case PAWN -> calculateAvailablePawnMoves(piece, pieces);
-                    case QUEEN -> calculateAvailableQueenMoves(piece, pieces);
-                    case ROOK -> calculateAvailableRookMoves(piece, pieces);
+                    case BISHOP -> calculateAvailableBishopMoves(piece, board.pieces);
+                    case KING -> calculateAvailableKingMoves(piece, board);
+                    case KNIGHT -> calculateAvailableKnightMoves(piece, board.pieces);
+                    case PAWN -> calculateAvailablePawnMoves(piece, board);
+                    case QUEEN -> calculateAvailableQueenMoves(piece, board.pieces);
+                    case ROOK -> calculateAvailableRookMoves(piece, board.pieces);
         };
     }
     public List<Move> calculateAvailableBishopMoves(Piece piece, List<Piece> pieces){
@@ -167,29 +173,29 @@ public class GameService {
         }
         return moves;
     }
-    public List<Move> calculateAvailableKingMoves(Piece piece, List<Piece> pieces){
+    public List<Move> calculateAvailableKingMoves(Piece piece, Board board){
         List<Move> moves = new ArrayList<>();
         for(int i=-1;i<=1;i++){
             for(int j=-1;j<=1;j++){
                 try{
-                    if(getPieceAt(i+piece.getCol(),j+piece.getRow(), pieces).isEmpty() || getPieceAt(i+piece.getCol(),j+piece.getRow(), pieces).get().getColor()!=piece.getColor()){ //2nd part can be null and throw exception
+                    if(getPieceAt(i+piece.getCol(),j+piece.getRow(), board.pieces).isEmpty() || getPieceAt(i+piece.getCol(),j+piece.getRow(), board.pieces).get().getColor()!=piece.getColor()){ //2nd part can be null and throw exception
                         moves.add(new Move(i+piece.getCol(),j+piece.getRow(), NORMAL));
                     }
                 }catch (Exception e){}
             }
         }
-        return calculateCastleMoves(moves, piece, pieces);
+        return calculateCastleMoves(moves, piece, board);
     }
-    public List<Move> calculateCastleMoves(List<Move> moves, Piece piece, List<Piece> pieces){
+    public List<Move> calculateCastleMoves(List<Move> moves, Piece piece, Board board){
         int side = piece.getColor()== WHITE ? 0 : 7;
         boolean king = piece.getColor()== WHITE ? board.whiteKingMoved : board.blackKingMoved;
         boolean rightRook = piece.getColor()== WHITE ? board.whiteRightRookMoved : board.blackRightRookMoved;
         boolean leftRook = piece.getColor()== WHITE ? board.whiteLeftRookMoved : board.whiteRightRookMoved;
         if(!king){
-            if(getPieceAt(5,side, pieces).isEmpty() && getPieceAt(6,side, pieces).isEmpty() && !rightRook){
+            if(getPieceAt(5,side, board.pieces).isEmpty() && getPieceAt(6,side, board.pieces).isEmpty() && !rightRook){
                 moves.add(new Move(6,side,CASTLE));
             }
-            if(getPieceAt(1,side, pieces).isEmpty() && getPieceAt(2,side, pieces).isEmpty() && getPieceAt(3,side, pieces).isEmpty() && !leftRook){
+            if(getPieceAt(1,side, board.pieces).isEmpty() && getPieceAt(2,side, board.pieces).isEmpty() && getPieceAt(3,side, board.pieces).isEmpty() && !leftRook){
                 moves.add(new Move(2,side,CASTLE));
             }
         }
@@ -210,21 +216,21 @@ public class GameService {
         }
         return moves;
     }
-    public List<Move> calculateAvailablePawnMoves(Piece piece, List<Piece> pieces){
+    public List<Move> calculateAvailablePawnMoves(Piece piece, Board board){
         List<Move> moves = new ArrayList<>();
         int side = piece.getColor()== WHITE ? 1 : -1;
-        if(getPieceAt(piece.getCol(),piece.getRow()+side, pieces).isEmpty()){
+        if(getPieceAt(piece.getCol(),piece.getRow()+side, board.pieces).isEmpty()){
             moves.add(new Move(piece.getCol(), piece.getRow()+side, NORMAL));//move 1 cell forward
-            calculateAvailableDoubleJump(moves, piece, pieces);
+            calculateAvailableDoubleJump(moves, piece, board.pieces);
         }
         for(int i=-1;i<=1;i=i+2){
             try{
-                if(getPieceAt(piece.getCol()+i,piece.getRow()+side, pieces).isPresent() && getPieceAt(piece.getCol()+i,piece.getRow()+side, pieces).get().getColor()!=piece.getColor()){
+                if(getPieceAt(piece.getCol()+i,piece.getRow()+side, board.pieces).isPresent() && getPieceAt(piece.getCol()+i,piece.getRow()+side, board.pieces).get().getColor()!=piece.getColor()){
                     moves.add(new Move(piece.getCol()+i,piece.getRow()+side,NORMAL));//move and capture
                 }
             }catch (Exception e){}
         }
-        return calculateAvailableEnPassant(moves, piece, pieces);
+        return calculateAvailableEnPassant(moves, piece, board);
     }
     public List<Move> calculateAvailableDoubleJump(List<Move> moves, Piece piece, List<Piece> pieces){
         int side = piece.getColor()== WHITE ? 5 : 0;
@@ -233,7 +239,7 @@ public class GameService {
         }
         return moves;
     }
-    public List<Move> calculateAvailableEnPassant(List<Move> moves, Piece piece, List<Piece> pieces){
+    public List<Move> calculateAvailableEnPassant(List<Move> moves, Piece piece, Board board){
         if(board.enPassantCol==-1) 
             return moves;//not available
         int side = piece.getColor()== WHITE ? 4 : 3;
@@ -279,16 +285,17 @@ public class GameService {
         }
         return moves;
     }
-    public List<Move> deleteIllegalMoves(Piece piece, List<Move> moves){
+    public List<Move> deleteIllegalMoves(Piece piece, List<Move> moves, Board board){
         Iterator<Move> pseudoLegalMove = moves.iterator();//iterator for removing in "foreach"
         while(pseudoLegalMove.hasNext()){
             //clone board and pieces
-            List<Piece> clonedBoard = new ArrayList<>(board.pieces.size());
+            List<Piece> clonedPieces = new ArrayList<>(board.pieces.size());
             board.pieces
                     .stream()
-                    .forEach(originPiece -> clonedBoard.add(new Piece(originPiece)));
+                    .forEach(originPiece -> clonedPieces.add(new Piece(originPiece)));
+            Board clonedBoard = new Board(clonedPieces);
             //get reference to cloned piece on origin piece cords
-            Piece clonedPiece = getPieceAt(piece.getCol(), piece.getRow(), clonedBoard).orElseThrow(IllegalArgumentException::new);
+            Piece clonedPiece = getPieceAt(piece.getCol(), piece.getRow(), clonedBoard.pieces).orElseThrow(IllegalArgumentException::new);
             //make pseudo legal move
             movePiece(clonedPiece,pseudoLegalMove.next(),clonedBoard);
             //if king is checked after move then move was illegal
@@ -298,12 +305,12 @@ public class GameService {
         }
         return moves;
     }
-    public boolean isCheck(Piece.Color kingColor, List<Piece> pieces){
-        Piece king = getKing(kingColor, pieces);
+    public boolean isCheck(Piece.Color kingColor, Board board){
+        Piece king = getKing(kingColor, board.pieces);
         List<Move> moves = new ArrayList<>();
-        for (Piece piece : pieces){
+        for (Piece piece : board.pieces){
             if(piece.getColor()!=kingColor){
-                moves.addAll(calculateAvailableMoves(piece, pieces));
+                moves.addAll(calculateAvailableMoves(piece, board));
             }
         }
         for (Move pseudoLegalMove : moves){
@@ -319,7 +326,7 @@ public class GameService {
                 .findAny()
                 .orElseThrow(IllegalArgumentException::new);//king always must be on the board
     }
-    public void disableCastleCheck(int colOrigin, int rowOrigin, int colTarget, int rowTarget){
+    public void disableCastleCheck(int colOrigin, int rowOrigin, int colTarget, int rowTarget, Board board){
         if(colOrigin ==0 && rowOrigin ==0){
             board.whiteLeftRookMoved=true;
         }

@@ -3,6 +3,7 @@ import { Router, RouterOutlet } from '@angular/router';
 import { ChessboardComponent } from "./chessboard/chessboard.component";
 import { HttpClientModule } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
+import { DataService } from './service/data.service';
 
 @Component({
     selector: 'app-root',
@@ -14,9 +15,16 @@ import { HttpClient } from '@angular/common/http';
 export class AppComponent implements OnInit {
   username: string = '';
   multiplayer: boolean = false;
-  constructor(private router: Router, private http: HttpClient) {}
+  constructor(private dataService: DataService, private router: Router, private http: HttpClient) {}
 
   ngOnInit() {
+    const playerId = this.dataService.getPlayerId();
+    if (!playerId==null) {
+      this.dataService.checkSession();
+      this.router.navigate(['/gameMode']);
+    } else {
+      this.router.navigate(['/signUp']);
+    }
     // forward to /display
     //this.router.navigate(['/display']);
   }

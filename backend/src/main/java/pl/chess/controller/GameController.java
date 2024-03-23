@@ -4,11 +4,11 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import pl.chess.domain.Move;
 import pl.chess.domain.Piece;
 import pl.chess.service.GameService;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping ("/api/game")
@@ -16,17 +16,21 @@ import java.util.List;
 public class GameController {
     private final GameService gameService;
     @GetMapping("/display")
-    public List<Piece> display(){
-        return gameService.getBoard();
+    public List<Piece> display(@RequestHeader("Authorization") String playerId){
+        return gameService.getBoard(UUID.fromString(playerId));
     }
     @PostMapping("/move")
-    public List<Piece> move(@RequestBody CordsDTO cordsDTO){
-        gameService.movePiece(cordsDTO.colOrigin,cordsDTO.rowOrigin,cordsDTO.colTarget,cordsDTO.rowTarget);
-        return gameService.getBoard();
+    public List<Piece> move(@RequestHeader("Authorization") String playerId, @RequestBody CordsDTO cordsDTO){
+        gameService.movePiece(cordsDTO.colOrigin,cordsDTO.rowOrigin,cordsDTO.colTarget,cordsDTO.rowTarget, UUID.fromString(playerId));
+        return gameService.getBoard(UUID.fromString(playerId));
     }
     @GetMapping("/checkMoves")
-    public ResponseEntity<List<Move>> checkMoves(@RequestParam int col, @RequestParam int row){
-        return ResponseEntity.ok(gameService.calculateLegalMoves(col,row));
+    public ResponseEntity<List<Move>> checkMoves(@RequestHeader("Authorization") String playerId, @RequestParam int col, @RequestParam int row){
+        return ResponseEntity.ok(gameService.calculateLegalMoves(col,row, UUID.fromString(playerId)));
+    }
+    @PostMapping("/newSingleGame")
+    public void newSingleGame(@RequestHeader("Authorization") String playerId){
+        gameService.newSingleGame(UUID.fromString(playerId));
     }
 
     @Data

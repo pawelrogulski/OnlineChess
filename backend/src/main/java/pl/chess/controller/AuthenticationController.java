@@ -1,10 +1,7 @@
 package pl.chess.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import pl.chess.domain.Player;
 import pl.chess.service.AuthenticationService;
 
@@ -20,7 +17,7 @@ public class AuthenticationController {
         return authenticationService.createPlayer(username);
     }
     @PostMapping("/signIn")
-    public Player signIn(@RequestBody String playerId){
+    public Player signIn(@RequestHeader("Authorization") String playerId){
         return authenticationService.validatePlayerCredentials(UUID.fromString(playerId));
     }
 }

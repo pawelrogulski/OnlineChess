@@ -12,6 +12,15 @@ import java.util.UUID;
 public class AuthenticationService {
     private Map<UUID, Board> gameSessions = new HashMap<>();
     private Map<UUID, String> players = new HashMap<>();
+    public Board findBoard(UUID playerId){
+        if(!players.containsKey(playerId)){
+            throw new IllegalArgumentException("Player not found");
+        }
+        if(!gameSessions.containsKey(playerId)){
+            throw new IllegalArgumentException("Player not in game");
+        }
+        return gameSessions.get(playerId);
+    }
     private void validateUsername(String username){
         if(username.isBlank()){
             throw new IllegalArgumentException("Username can't be blank");
@@ -47,5 +56,8 @@ public class AuthenticationService {
         }
         players.put(playerId, username);
         return playerId;
+    }
+    public void newSingleGame(UUID playerId, Board board){
+        gameSessions.put(playerId, board);
     }
 }
