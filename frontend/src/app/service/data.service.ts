@@ -43,7 +43,6 @@ export class DataService {
     return false;
   }
   signUp(username : string): void {
-    console.log(username);
     this.http.post<string>('http://localhost:8080/api/auth/signUp', username).subscribe(data =>{
       this.setPlayerId(data);
     });

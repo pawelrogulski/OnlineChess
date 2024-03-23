@@ -12,15 +12,19 @@ import { GameModeService } from '../service/game-mode.service';
 export class GameModeComponent {
   constructor(private router: Router, private gameModeService: GameModeService) { }
   selectSingleplayer(){
-    this.gameModeService.newSingleplayerGame().subscribe(data => {
-      if(data){
-        this.router.navigate(['/game']);
-      }
-      else{
-        this.router.navigate(['/singUp']);
+    this.gameModeService.newSingleplayerGame().subscribe({
+      next: (data) => {
+        if(data){
+          this.router.navigate(['/game']);
+        }
+        else{
+          this.router.navigate(['/singUp']);
+        }
+      },
+      error: (error) => {
+        this.router.navigate(['/signUp']);
       }
     });
-
   }
   selectMultiplayer(){
     this.gameModeService.newtMultiplayerGame();

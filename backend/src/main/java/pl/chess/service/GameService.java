@@ -78,7 +78,7 @@ public class GameService {
             throw new IllegalArgumentException("Origin and target must be different. ColOrigin:"+colOrigin+" rowOrigin:"+rowOrigin+" colTarget:"+colTarget+" rowTarget:"+rowTarget);
         }
     }
-    public void movePiece(int colOrigin, int rowOrigin, int colTarget, int rowTarget, UUID playerId){
+    public Board movePiece(int colOrigin, int rowOrigin, int colTarget, int rowTarget, UUID playerId){
         checkInputValues(colOrigin,rowOrigin,colTarget,rowTarget);
         Board board = authenticationService.findBoard(playerId);
         Piece piece = getPieceAt(colOrigin, rowOrigin, playerId)
@@ -92,14 +92,19 @@ public class GameService {
         board.enPassantRow=-1;//reset en passant
         movePiece(piece, target, board);
         disableCastleCheck(colOrigin,rowOrigin,colTarget,rowTarget, board);
-        isMate(piece.getColor(), board);
+        if(isMate(piece.getColor(), board)){
+            return board;
+        }
         board.changeTurn();
         if(board.getGameMode()== Board.GameMode.SINGLEPLAYER){
             useEngine(board);
-            isMate(piece.getColor(), board);
+            if(isMate(piece.getColor(), board)){
+                return board;
+            }
             board.enPassantCol=-1;
             board.enPassantRow=-1;//reset en passant
         }
+        return board;
     }
     public void movePiece(Piece piece, Move move, Board board){
         switch (move.getType()){
@@ -347,7 +352,7 @@ public class GameService {
         }
         return false;
     }
-    public void isMate(Piece.Color color, Board board){
+    public boolean isMate(Piece.Color color, Board board){
         List<Move> moves = new ArrayList<>();
         String score = "";
         board.pieces//get all moves of enemy
@@ -355,7 +360,7 @@ public class GameService {
                 .filter(piece -> piece.getColor()!=color)
                 .forEach(piece -> moves.addAll(calculateLegalMoves(piece.getCol(),piece.getRow(),board)));
         if(moves.size()>0){
-            return;
+            return false;
         }
         Piece.Color enemyColor = color==WHITE ? BLACK : WHITE;
         if(isCheck(enemyColor,board)){
@@ -369,6 +374,7 @@ public class GameService {
             notificationService.sendToEmitter(score,board.getBlackPlayer().getUserId());
         }
         authenticationService.deleteSession(board);
+        return true;
     }
     public Piece getKing(Piece.Color color, List<Piece> pieces){
         return pieces.stream()

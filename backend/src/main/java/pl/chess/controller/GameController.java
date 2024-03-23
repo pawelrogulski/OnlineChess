@@ -21,8 +21,7 @@ public class GameController {
     }
     @PostMapping("/move")
     public List<Piece> move(@RequestHeader("Authorization") String playerId, @RequestBody CordsDTO cordsDTO){
-        gameService.movePiece(cordsDTO.colOrigin,cordsDTO.rowOrigin,cordsDTO.colTarget,cordsDTO.rowTarget, UUID.fromString(playerId));
-        return gameService.getBoard(UUID.fromString(playerId));
+        return gameService.movePiece(cordsDTO.colOrigin,cordsDTO.rowOrigin,cordsDTO.colTarget,cordsDTO.rowTarget, UUID.fromString(playerId)).pieces;
     }
     @GetMapping("/checkMoves")
     public ResponseEntity<List<Move>> checkMoves(@RequestHeader("Authorization") String playerId, @RequestParam int col, @RequestParam int row){

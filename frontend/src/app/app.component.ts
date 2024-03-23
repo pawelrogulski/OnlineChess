@@ -20,7 +20,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     const playerId = this.dataService.getPlayerId();
-    if (playerId!=null && playerId!=="undefined") {
+    if (playerId.length>10) {
       this.dataService.checkSession();
       this.router.navigate(['/gameMode']);
     } else {
