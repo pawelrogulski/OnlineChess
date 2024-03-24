@@ -1,6 +1,8 @@
+import { NotificationService } from './../service/notification.service';
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { GameModeService } from '../service/game-mode.service';
+import { NgZone } from '@angular/core';
 
 @Component({
   selector: 'app-game-mode',
@@ -10,11 +12,14 @@ import { GameModeService } from '../service/game-mode.service';
   styleUrl: './game-mode.component.css'
 })
 export class GameModeComponent {
-  constructor(private router: Router, private gameModeService: GameModeService) { }
+  notification: string = '';
+  constructor(private router: Router, private gameModeService: GameModeService, private notificationService: NotificationService, private ngZone: NgZone) { }
   selectSingleplayer(){
     this.gameModeService.newSingleplayerGame().subscribe({
       next: (data) => {
         if(data){
+          window.sessionStorage.removeItem('whiteSide');
+          window.sessionStorage.setItem('whiteSide','WHITE');
           this.router.navigate(['/game']);
         }
         else{
@@ -27,7 +32,28 @@ export class GameModeComponent {
     });
   }
   selectMultiplayer(){
-    this.gameModeService.newtMultiplayerGame();
-    this.router.navigate(['/game']);
+    this.notificationService.getNotifications().subscribe(notification => {
+      this.notification = notification;
+      console.log(this.notification);
+      window.sessionStorage.removeItem('whiteSide');
+      window.sessionStorage.setItem('whiteSide',this.notification);
+      this.ngZone.run(() => {//without it error "Navigation triggered outside Angular zone, did you forget to call 'ngZone.run()'?" would be thrown
+        this.router.navigate(['/game']);
+      });
+    });
+    this.gameModeService.newtMultiplayerGame().subscribe({
+      next: (data) => {
+        if(data){
+          console.log("Searching for game");
+        }
+        else{
+          console.log("Error");
+          this.router.navigate(['/signUp']);
+        }
+      },
+      error: (error) => {
+        this.router.navigate(['/signUp']);
+      }
+    });
   }
 }

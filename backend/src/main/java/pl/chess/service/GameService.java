@@ -20,7 +20,7 @@ public class GameService {
     private final ChessEngineService chessEngineService;
     private final NotificationService notificationService;
     public void newSingleGame(UUID playerId){
-        authenticationService.newSingleGame(playerId, initializeBoard(playerId));
+        authenticationService.newSingleGame(initializeBoard(playerId));
     }
     public List<Piece> getBoard(UUID playerId){
         return authenticationService.findBoard(playerId).pieces;

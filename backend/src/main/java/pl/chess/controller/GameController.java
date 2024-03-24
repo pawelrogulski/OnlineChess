@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import pl.chess.domain.Move;
 import pl.chess.domain.Piece;
 import pl.chess.service.GameService;
+import pl.chess.service.MatchmakingService;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -15,6 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GameController {
     private final GameService gameService;
+    private final MatchmakingService matchmakingService;
     @GetMapping("/display")
     public List<Piece> display(@RequestHeader("Authorization") String playerId){
         return gameService.getBoard(UUID.fromString(playerId));
@@ -31,6 +34,10 @@ public class GameController {
     public boolean newSingleGame(@RequestHeader("Authorization") String playerId){
         gameService.newSingleGame(UUID.fromString(playerId));
         return true;
+    }
+    @PostMapping("/newMultiGame")
+    public boolean newMultiGame(@RequestHeader("Authorization") String playerId) throws InterruptedException {
+        return matchmakingService.addPlayerToQueue(UUID.fromString(playerId));
     }
 
     @Data

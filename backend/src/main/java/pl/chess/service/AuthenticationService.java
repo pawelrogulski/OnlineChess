@@ -14,6 +14,13 @@ public class AuthenticationService {
     private Map<UUID, Board> gameSessions = new HashMap<>();
     private Map<UUID, String> players = new HashMap<>(Map.of(engine.getUserId(),engine.getUsername()));
 
+    public boolean playerExists(UUID playerId){
+        if(players.containsKey(playerId)){
+            return true;
+        }
+        return false;
+    }
+
     public Player getEngineInstance(){
         return engine;
     }
@@ -62,13 +69,17 @@ public class AuthenticationService {
         players.put(playerId, username);
         return playerId;
     }
-    public void newSingleGame(UUID playerId, Board board){
-        gameSessions.put(playerId, board);
+    public void newSingleGame(Board board){
+        gameSessions.put(board.getWhitePlayer().getUserId(), board);
     }
     public void deleteSession(Board board){
         gameSessions.remove(board.getWhitePlayer().getUserId());
         if(board.getGameMode()== Board.GameMode.MULTIPLAYER){
             gameSessions.remove(board.getBlackPlayer().getUserId());
         }
+    }
+    public void newMultiGame(Board board){
+        gameSessions.put(board.getWhitePlayer().getUserId(), board);
+        gameSessions.put(board.getBlackPlayer().getUserId(), board);
     }
 }

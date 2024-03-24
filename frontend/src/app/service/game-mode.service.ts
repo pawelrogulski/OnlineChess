@@ -15,9 +15,10 @@ export class GameModeService {
     const headers = new HttpHeaders().set('Authorization', playerId);
     return this.http.post<boolean>('http://localhost:8080/api/game/newSingleGame', null, { headers });
   }
-  newtMultiplayerGame(){
+  newtMultiplayerGame():Observable<boolean>{
     const playerId = this.dataService.getPlayerId();
-    this.http.post('http://localhost:8080/api/game/newMultiGame', {playerId}).subscribe();
+    const headers = new HttpHeaders().set('Authorization', playerId);
+    return this.http.post<boolean>('http://localhost:8080/api/game/newMultiGame', null, { headers });
   }
 
 }
