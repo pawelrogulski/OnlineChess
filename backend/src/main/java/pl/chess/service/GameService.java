@@ -364,7 +364,7 @@ public class GameService {
         }
         Piece.Color enemyColor = color==WHITE ? BLACK : WHITE;
         if(isCheck(enemyColor,board)){
-            score = enemyColor==WHITE ? "BLACK_WON" : "WHITE_WON";
+            score = enemyColor==WHITE ? "BLACK WINS" : "WHITE WINS";
         }
         else{
             score = "DRAW";

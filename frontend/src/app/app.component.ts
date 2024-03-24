@@ -27,14 +27,4 @@ export class AppComponent implements OnInit {
       this.router.navigate(['/signUp']);
     }
   }
-  // startGame() {
-  //   this.http.post<any>('/api/start-game', { username: this.username, gameMode: this.multiplayer ? 'multiplayer' : 'singleplayer' })
-  //     .subscribe(response => {
-  //       const userId = response.userId;
-  //       document.cookie = `userId=${userId}`;
-  //       window.location.href = '/choose-game-mode';
-  //     }, error => {
-  //       console.error('Error starting game:', error);
-  //     });
-  // }
 }

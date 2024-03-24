@@ -1,3 +1,4 @@
+import { GameModeService } from './../service/game-mode.service';
 import { CommonModule } from '@angular/common';
 import { DisplayService } from '../service/display.service';
 import { MoveService } from '../service/move.service';
@@ -6,6 +7,7 @@ import { Component, OnInit } from '@angular/core';
 import { Move } from '../move';
 import { NotificationService } from '../service/notification.service';
 import { DataService } from '../service/data.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-chessboard',
@@ -22,7 +24,7 @@ export class ChessboardComponent implements OnInit {
   chessboardButtons: { id: string; text: string; textColor: string }[][] = [];
   whiteSide: boolean = true;//true if player is playing white pieces
   sideColor: number[] = this.whiteSide == true ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
-  constructor(private displayService: DisplayService, private moveService: MoveService, private notificationService: NotificationService) {}
+  constructor(private displayService: DisplayService, private moveService: MoveService, private notificationService: NotificationService, private router: Router) {}
   ngOnInit(): void {
     this.loadChessPieces();
     this.notificationService.getNotifications().subscribe(notification => {
@@ -114,6 +116,9 @@ export class ChessboardComponent implements OnInit {
       this.cleanBoard(true);
       this.generateButtonText();
     })
+  }
+  newGame() {
+    this.router.navigate(['/gameMode']);
   }
 
 }
