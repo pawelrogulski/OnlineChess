@@ -67,4 +67,15 @@ public class Board {
     public GameMode getGameMode(){
         return this.gameMode;
     }
+    @Override
+    public String toString(){//pieces to string
+        StringBuilder sb = new StringBuilder();
+        for(Piece piece : this.pieces){
+            sb.append(piece.getCol()).append("_")// col_row_color_type col_row_color_type ...
+                    .append(piece.getRow()).append("_")
+                    .append(piece.getColor()).append("_")
+                    .append(piece.getType()).append(" ");
+        }
+        return sb.toString().trim();
+    }
 }

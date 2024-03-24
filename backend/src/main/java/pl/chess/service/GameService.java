@@ -92,10 +92,13 @@ public class GameService {
         board.enPassantRow=-1;//reset en passant
         movePiece(piece, target, board);
         disableCastleCheck(colOrigin,rowOrigin,colTarget,rowTarget, board);
+        board.changeTurn();
+        if(board.getGameMode()== Board.GameMode.MULTIPLAYER){
+            notificationService.sendToEmitter(board.toString(), board.getTurn().getUserId());
+        }
         if(isMate(piece.getColor(), board)){
             return board;
         }
-        board.changeTurn();
         if(board.getGameMode()== Board.GameMode.SINGLEPLAYER){
             useEngine(board);
             if(isMate(piece.getColor(), board)){

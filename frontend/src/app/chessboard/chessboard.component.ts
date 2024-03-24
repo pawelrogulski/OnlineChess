@@ -1,4 +1,3 @@
-import { GameModeService } from './../service/game-mode.service';
 import { CommonModule } from '@angular/common';
 import { DisplayService } from '../service/display.service';
 import { MoveService } from '../service/move.service';
@@ -6,7 +5,6 @@ import { Piece } from './../piece';
 import { Component, OnInit, NgZone  } from '@angular/core';
 import { Move } from '../move';
 import { NotificationService } from '../service/notification.service';
-import { DataService } from '../service/data.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -27,10 +25,13 @@ export class ChessboardComponent implements OnInit {
   ngOnInit(): void {
     this.loadChessPieces();
     this.notificationService.getNotifications().subscribe(notification => {
+      console.log(notification);
       this.notification = notification;
-      console.log(this.notification);
       if (notification === 'DRAW' || notification === 'WHITE WINS' || notification === 'BLACK WINS') {
         this.generateEndingScreenHTML(notification);
+      }
+      else{
+        this.updateBoardAfterEnemyMove(notification);
       }
     });
   }
@@ -118,6 +119,22 @@ export class ChessboardComponent implements OnInit {
       this.cleanBoard(true);
       this.generateButtonText();
     })
+  }
+  updateBoardAfterEnemyMove(update: string){
+    const piecesAsString: string[] = update.split(" ");
+    this.pieces=[];
+    for (const pieceAsString of piecesAsString) {
+      const pieceAsArray: string[] = pieceAsString.split("_");
+      const piece: Piece = {
+        col: parseInt(pieceAsArray[0]),
+        row: parseInt(pieceAsArray[1]),
+        color: pieceAsArray[2],
+        type: pieceAsArray[3]
+      };
+      this.pieces.push(piece);
+    }
+    this.cleanBoard(true);
+    this.generateButtonText();
   }
   newGame() {
     this.ngZone.run(() => {
