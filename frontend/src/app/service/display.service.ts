@@ -15,4 +15,12 @@ export class DisplayService {
     const headers = new HttpHeaders().set('Authorization', this.dataService.getPlayerId());
     return this.http.get<Piece[]>('http://localhost:8080/api/game/display', { headers });
   }
+  getUsername(): Observable<string>{
+    const headers = new HttpHeaders().set('Authorization', this.dataService.getPlayerId());
+    return this.http.get('http://localhost:8080/api/auth/getUsername', { headers, responseType: 'text' });
+  }
+  getEnemyUsername(): Observable<string>{
+    const headers = new HttpHeaders().set('Authorization', this.dataService.getPlayerId());
+    return this.http.get('http://localhost:8080/api/auth/getEnemyUsername', { headers: headers, responseType: 'text' });
+  }
 }

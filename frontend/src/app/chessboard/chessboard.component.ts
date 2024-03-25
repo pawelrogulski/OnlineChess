@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { DisplayService } from '../service/display.service';
 import { MoveService } from '../service/move.service';
 import { Piece } from './../piece';
-import { Component, OnInit, NgZone  } from '@angular/core';
+import { Component, OnInit, NgZone, AfterViewInit  } from '@angular/core';
 import { Move } from '../move';
 import { NotificationService } from '../service/notification.service';
 import { Router } from '@angular/router';
@@ -21,6 +21,8 @@ export class ChessboardComponent implements OnInit {
   notification: string = '';
   chessboardButtons: { id: string; text: string; textColor: string }[][] = [];
   sideColor: number[] = window.sessionStorage.getItem('whiteSide')==='BLACK'? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0] ;//inverts board if player is on black side
+  username: string="";
+  enemyUsername: string="";
   constructor(private displayService: DisplayService, private moveService: MoveService, private notificationService: NotificationService, private router: Router, private ngZone: NgZone) {}
   ngOnInit(): void {
     this.loadChessPieces();
@@ -36,11 +38,12 @@ export class ChessboardComponent implements OnInit {
     });
   }
 
-  loadChessPieces(): void {
-      this.displayService.getGameData().subscribe(data => {
+  async loadChessPieces() {
+    await this.displayService.getGameData().subscribe(data => {
       this.pieces = data;
       this.generateButtonText();
     });
+    await this.getUsernames();
   }
   generateButtonText(): void {//piece or move
     for(let i = 0; i < this.pieces.length; i++) {
@@ -152,4 +155,16 @@ export class ChessboardComponent implements OnInit {
       EndingScreenContainer.appendChild(btn);
     }
   }
+  getUsernames(){
+      this.displayService.getUsername().subscribe(data =>
+        {
+          this.username=data;
+          console.log(data)
+      });
+      this.displayService.getEnemyUsername().subscribe(data =>
+        {
+          this.enemyUsername=data;
+          console.log(data)
+      });
+    }
 }

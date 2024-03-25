@@ -31,7 +31,8 @@ public class GameController {
         return ResponseEntity.ok(gameService.calculateLegalMoves(col,row, UUID.fromString(playerId)));
     }
     @PostMapping("/newSingleGame")
-    public boolean newSingleGame(@RequestHeader("Authorization") String playerId){
+    public boolean newSingleGame(@RequestHeader("Authorization") String playerId) throws InterruptedException {
+        Thread.sleep(5000);
         gameService.newSingleGame(UUID.fromString(playerId));
         return true;
     }

@@ -82,4 +82,12 @@ public class AuthenticationService {
         gameSessions.put(board.getWhitePlayer().getUserId(), board);
         gameSessions.put(board.getBlackPlayer().getUserId(), board);
     }
+
+    public String getUsername(UUID playerId) {
+        return players.get(playerId);
+    }
+    public String getEnemyUsername(UUID playerId) {
+        Board board = gameSessions.get(playerId);
+        return !board.getWhitePlayer().getUserId().equals(playerId) ? board.getWhitePlayer().getUsername() : board.getBlackPlayer().getUsername();
+    }
 }
