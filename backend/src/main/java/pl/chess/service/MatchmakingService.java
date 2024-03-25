@@ -22,7 +22,9 @@ public class MatchmakingService {
         if(!authenticationService.playerExists(playerId)){
             return false;
         }
-        multiplayerQueue.add(playerId);
+        if(!multiplayerQueue.contains(playerId)){
+            multiplayerQueue.add(playerId);
+        }
         if(multiplayerQueue.size()>1){
             sendStartMultiplayerGameNotification();
         }

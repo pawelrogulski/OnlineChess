@@ -37,6 +37,7 @@ export class GameModeComponent {
       console.log(this.notification);
       window.sessionStorage.removeItem('whiteSide');
       window.sessionStorage.setItem('whiteSide',this.notification);
+      this.removeWaitingScreenHTML();
       this.ngZone.run(() => {//without it error "Navigation triggered outside Angular zone, did you forget to call 'ngZone.run()'?" would be thrown
         this.router.navigate(['/game']);
       });
@@ -44,6 +45,7 @@ export class GameModeComponent {
     this.gameModeService.newtMultiplayerGame().subscribe({
       next: (data) => {
         if(data){
+          this.generateWaitingScreenHTML();
           console.log("Searching for game");
         }
         else{
@@ -55,5 +57,18 @@ export class GameModeComponent {
         this.router.navigate(['/signUp']);
       }
     });
+  }
+  generateWaitingScreenHTML() {
+    const WaitingScreenContainer = document.getElementById('notification-container');
+    if(WaitingScreenContainer!=null){
+      WaitingScreenContainer.classList.add("notification-container");
+      WaitingScreenContainer.innerHTML = "Searching for game";
+    }
+  }
+  removeWaitingScreenHTML(){
+    const WaitingScreenContainer = document.getElementById('notification-container');
+    if(WaitingScreenContainer!=null){
+      WaitingScreenContainer.parentNode?.removeChild(WaitingScreenContainer);
+    }
   }
 }
