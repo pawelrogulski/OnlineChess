@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import pl.chess.domain.Board;
 import pl.chess.domain.Player;
 
+import java.nio.file.attribute.UserPrincipalNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -49,8 +50,9 @@ public class AuthenticationService {
         if(players.containsKey(playerId)){
             player.setUsername(players.get(playerId));
             player.setUserId(playerId);
+            return player;
         }
-        return player;
+        throw new IllegalArgumentException("User not found");
     }
     public UUID createPlayer(String username){
         validateUsername(username);
