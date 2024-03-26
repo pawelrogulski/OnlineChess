@@ -2,8 +2,10 @@ import { CommonModule } from '@angular/common';
 import { DisplayService } from '../service/display.service';
 import { MoveService } from '../service/move.service';
 import { Piece } from './../piece';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone, AfterViewInit  } from '@angular/core';
 import { Move } from '../move';
+import { NotificationService } from '../service/notification.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-chessboard',
@@ -16,19 +18,32 @@ export class ChessboardComponent implements OnInit {
   pieces: Piece[] = [];
   moves: Move[] = [];
   currentPiece: number[] = []; //column and row
+  notification: string = '';
   chessboardButtons: { id: string; text: string; textColor: string }[][] = [];
-  whiteSide: boolean = true;//true if player is playing white pieces
-  sideColor: number[] = this.whiteSide == true ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
-  constructor(private displayService: DisplayService, private moveService: MoveService) {}
+  sideColor: number[] = window.sessionStorage.getItem('whiteSide')==='BLACK'? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0] ;//inverts board if player is on black side
+  username: string="";
+  enemyUsername: string="";
+  constructor(private displayService: DisplayService, private moveService: MoveService, private notificationService: NotificationService, private router: Router, private ngZone: NgZone) {}
   ngOnInit(): void {
     this.loadChessPieces();
+    this.notificationService.getNotifications().subscribe(notification => {
+      console.log(notification);
+      this.notification = notification;
+      if (notification === 'DRAW' || notification === 'WHITE WINS' || notification === 'BLACK WINS') {
+        this.generateEndingScreenHTML(notification);
+      }
+      else{
+        this.updateBoardAfterEnemyMove(notification);
+      }
+    });
   }
 
-  loadChessPieces(): void {
-      this.displayService.getGameData().subscribe(data => {
+  async loadChessPieces() {
+    await this.displayService.getGameData().subscribe(data => {
       this.pieces = data;
       this.generateButtonText();
     });
+    await this.getUsernames();
   }
   generateButtonText(): void {//piece or move
     for(let i = 0; i < this.pieces.length; i++) {
@@ -90,12 +105,10 @@ export class ChessboardComponent implements OnInit {
         }
       })
       if(flagMove) {
-        console.log("move");
         this.movePiece(col,row);
       }
       else{
         this.moveService.checkMoves(col, row).subscribe(data => {
-          console.log("check");
           this.moves = data;
           this.changeButtonBackgroundMove(data);
           this.currentPiece = [col,row];
@@ -110,4 +123,48 @@ export class ChessboardComponent implements OnInit {
       this.generateButtonText();
     })
   }
+  updateBoardAfterEnemyMove(update: string){
+    const piecesAsString: string[] = update.split(" ");
+    this.pieces=[];
+    for (const pieceAsString of piecesAsString) {
+      const pieceAsArray: string[] = pieceAsString.split("_");
+      const piece: Piece = {
+        col: parseInt(pieceAsArray[0]),
+        row: parseInt(pieceAsArray[1]),
+        color: pieceAsArray[2],
+        type: pieceAsArray[3]
+      };
+      this.pieces.push(piece);
+    }
+    this.cleanBoard(true);
+    this.generateButtonText();
+  }
+  newGame() {
+    this.ngZone.run(() => {
+      this.router.navigate(['/gameMode']);
+    });
+  }
+  generateEndingScreenHTML(notification: string) {
+    const EndingScreenContainer = document.getElementById('notification-container');
+    if(EndingScreenContainer!=null){
+      EndingScreenContainer.classList.add("notification-container");
+      EndingScreenContainer.innerHTML = `${notification}</br>`;
+      let btn:HTMLButtonElement=<HTMLButtonElement>document.createElement("button");
+      btn.textContent = "New Game";
+      btn.addEventListener('click', (e:Event) => this.newGame());
+      EndingScreenContainer.appendChild(btn);
+    }
+  }
+  getUsernames(){
+      this.displayService.getUsername().subscribe(data =>
+        {
+          this.username=data;
+          console.log(data)
+      });
+      this.displayService.getEnemyUsername().subscribe(data =>
+        {
+          this.enemyUsername=data;
+          console.log(data)
+      });
+    }
 }

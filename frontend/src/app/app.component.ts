@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { ChessboardComponent } from "./chessboard/chessboard.component";
 import { HttpClientModule } from '@angular/common/http';
+import { DataService } from './service/data.service';
 
 @Component({
     selector: 'app-root',
@@ -11,11 +12,16 @@ import { HttpClientModule } from '@angular/common/http';
     imports: [RouterOutlet, ChessboardComponent, HttpClientModule]
 })
 export class AppComponent implements OnInit {
-  title: any;
-  constructor(private router: Router) {}
+  username: string = '';
+  multiplayer: boolean = false;
+  constructor(private dataService: DataService, private router: Router) {}
 
   ngOnInit() {
-    // forward to /display
-    this.router.navigate(['/display']);
+    const playerId = this.dataService.getPlayerId();
+    if (playerId.length>10) {
+      this.router.navigate(['/gameMode']);
+    } else {
+      this.router.navigate(['/signUp']);
+    }
   }
 }
