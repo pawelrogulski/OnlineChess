@@ -15,4 +15,13 @@ public class Move {
         CASTLE,
         EN_PASSANT
     }
+    @Override
+    public boolean equals(Object obj){
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Move move = (Move) obj;
+        return col == move.col &&
+                row == move.row &&
+                type == move.type;
+    }
 }
