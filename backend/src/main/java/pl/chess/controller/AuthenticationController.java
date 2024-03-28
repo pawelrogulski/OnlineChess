@@ -14,8 +14,8 @@ import java.util.UUID;
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
     @PostMapping("/signUp")
-    public UUID signUp(@RequestBody String username){
-        return authenticationService.createPlayer(username);
+    public ResponseEntity<UUID> signUp(@RequestBody String username){
+        return ResponseEntity.ok(authenticationService.createPlayer(username));
     }
     @PostMapping("/signIn")
     public Player signIn(@RequestHeader("Authorization") String playerId){

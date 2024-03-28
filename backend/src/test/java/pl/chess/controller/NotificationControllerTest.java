@@ -54,8 +54,6 @@ class NotificationControllerTest {
                         requestTo(url))
                 .andRespond(withSuccess("sample event", MediaType.TEXT_EVENT_STREAM));
         ResponseEntity<String> responseEntity = testRestTemplate.getForEntity(url, String.class);
-        String responseBody = responseEntity.getBody();
-        System.out.println("Received SSE event: " + responseBody);
 
         responseEntity.getBody();
         latch.countDown();
