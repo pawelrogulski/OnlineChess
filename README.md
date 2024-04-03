@@ -2,7 +2,7 @@
 This project is an implementation of a chess game developed using Angular for the frontend and Spring Boot for the backend. It features both singleplayer and multiplayer modes.
 
 ## Features
-Singleplayer Mode: Play against an AI opponent.
+Singleplayer Mode: Play against an AI opponent. </br>
 Multiplayer Mode: Play against another player.
 Real-time Gameplay: Gameplay experience with real-time updates.
 
