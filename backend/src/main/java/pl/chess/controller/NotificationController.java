@@ -17,6 +17,9 @@ public class NotificationController {
     @GetMapping(value = "/notifications/{playerId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter getNotifications(@PathVariable String playerId) {
         SseEmitter emitter = new SseEmitter();
+        emitter.onCompletion(() -> { // disconnect handler
+            notificationService.removeEmitter(UUID.fromString(playerId));
+        });
         notificationService.putEmitter(UUID.fromString(playerId), emitter);
         return emitter;
     }
