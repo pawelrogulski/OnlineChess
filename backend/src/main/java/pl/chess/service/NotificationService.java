@@ -22,4 +22,8 @@ public class NotificationService {
             emitter.completeWithError(e);
         }
     }
+
+    public void removeEmitter(UUID playerId) {
+        emitters.remove(playerId);
+    }
 }
